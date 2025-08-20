@@ -5,7 +5,7 @@ EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
-COPY ["BarberShopAPI.Server.csproj", "BarberShopAPI.Server/"]
+COPY ["BarberShopAPI.Server/BarberShopAPI.Server.csproj", "BarberShopAPI.Server/"]
 RUN dotnet restore "BarberShopAPI.Server/BarberShopAPI.Server.csproj"
 COPY . .
 WORKDIR "/src/BarberShopAPI.Server"

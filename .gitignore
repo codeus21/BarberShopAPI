@@ -15,6 +15,7 @@ bld/
 [Ll]ogs/
 
 # Visual Studio files
+.vs/
 *.user
 *.suo
 *.userosscache

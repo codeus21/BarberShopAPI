@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using BarberShopAPI.Data;
-using BarberShopAPI.Models;
+using BarberShopAPI.Server.Data;
+using BarberShopAPI.Server.Models;
 
 namespace BarberShopAPI.Controllers
 {

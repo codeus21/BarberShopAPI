@@ -4,8 +4,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using BarberShopAPI.Data;
-using BarberShopAPI.Models;
+using BarberShopAPI.Server.Data;
+using BarberShopAPI.Server.Models;
 using BCrypt.Net;
 
 namespace BarberShopAPI.Controllers

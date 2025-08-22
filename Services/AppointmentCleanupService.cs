@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using BarberShopAPI.Data;
-using BarberShopAPI.Models;
+using BarberShopAPI.Server.Data;
+using BarberShopAPI.Server.Models;
 
-namespace BarberShopAPI.Services
+namespace BarberShopAPI.Server.Services
 {
     public class AppointmentCleanupService : BackgroundService
     {

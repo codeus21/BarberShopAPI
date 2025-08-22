@@ -1,4 +1,4 @@
-namespace BarberShopAPI.Models
+namespace BarberShopAPI.Server.Models
 {
     public class LoginResponse
     {

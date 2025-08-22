@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace BarberShopAPI.Models
+namespace BarberShopAPI.Server.Models
 {
     public class Admin
     {

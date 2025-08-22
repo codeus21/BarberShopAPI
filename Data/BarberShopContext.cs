@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using BarberShopAPI.Models;
+using BarberShopAPI.Server.Models;
 
-namespace BarberShopAPI.Data
+namespace BarberShopAPI.Server.Data
 {
     public class BarberShopContext : DbContext
     {

@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace BarberShopAPI.Models
+namespace BarberShopAPI.Server.Models
 {
     public class Service
     {

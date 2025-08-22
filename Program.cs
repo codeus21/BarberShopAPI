@@ -2,9 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using BarberShopAPI.Data;
+using BarberShopAPI.Server.Data;
 using Microsoft.OpenApi.Models;
-using BarberShopAPI.Services;
+using BarberShopAPI.Server.Models;
+using BarberShopAPI.Server.Controllers;
+using BarberShopAPI.Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 

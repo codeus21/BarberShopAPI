@@ -94,11 +94,8 @@ app.Urls.Clear();
 app.Urls.Add($"http://0.0.0.0:{port}");
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 

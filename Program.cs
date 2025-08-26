@@ -80,7 +80,8 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(
             "https://your-frontend-domain.vercel.app",  // We'll update this later
-            "http://localhost:5173" // Keep for local development
+            "http://localhost:5173", // Keep for local development
+            "http://localhost:4173"  // Keep for local development
         )
         .AllowAnyHeader()
         .AllowAnyMethod();

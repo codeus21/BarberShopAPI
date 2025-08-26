@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BarberShopAPI.Server.Migrations
 {
     [DbContext(typeof(BarberShopContext))]
-    [Migration("20250824034613_InitialCreate")]
+    [Migration("20250826030839_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />

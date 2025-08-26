@@ -79,7 +79,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowReactApp", policy =>
     {
         policy.WithOrigins(
-            "https://your-frontend-domain.vercel.app",  // We'll update this later
+            "https://*.vercel.app",  // We'll update this later
             "http://localhost:5173", // Keep for local development
             "http://localhost:4173"  // Keep for local development
         )

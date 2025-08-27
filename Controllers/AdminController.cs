@@ -101,14 +101,11 @@ namespace BarberShopAPI.Controllers
         [HttpPost("cleanup-completed")]
         public async Task<IActionResult> CleanupCompletedAppointments()
         {
-            var today = DateTime.Today;
+            var yesterday = DateTime.Today.AddDays(-1);
 
             // Get all confirmed appointments from past dates (including today but past times)
             var pastAppointments = await _context.Appointments
-                .Where(a =>
-                    (a.AppointmentDate < today) ||
-                    (a.AppointmentDate == today && a.AppointmentTime < DateTime.Now.TimeOfDay) &&
-                    a.Status == "Confirmed")
+                .Where(a => a.AppointmentDate <= yesterday && a.Status == "Confirmed")
                 .ToListAsync();
 
             if (pastAppointments.Any())

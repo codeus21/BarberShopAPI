@@ -81,7 +81,8 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(
             "https://the-barber-book.vercel.app",  // Vercel deployment
             "http://localhost:5173", // Keep for local development
-            "http://localhost:4173"  // Keep for local development
+            "http://localhost:4173",  // Keep for local development
+            "http://192.168.1.99:5173"  // Keep for local network testing
         )
         .AllowAnyHeader()
         .AllowAnyMethod();

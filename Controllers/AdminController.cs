@@ -122,6 +122,38 @@ namespace BarberShopAPI.Controllers
 
             return Ok(new { message = "No past appointments to mark as completed" });
         }
+        // DELETE: api/Admin/clear-past-appointments
+        [HttpDelete("clear-past-appointments")]
+        public async Task<IActionResult> ClearPastAppointments()
+        {
+            try
+            {
+                var yesterday = DateTime.Today.AddDays(-1);
+
+                // Get all past appointments (yesterday and earlier)
+                var pastAppointments = await _context.Appointments
+                    .Where(a => a.AppointmentDate <= yesterday)
+                    .ToListAsync();
+
+                if (!pastAppointments.Any())
+                {
+                    return Ok(new { message = "No past appointments found to clear." });
+                }
+
+                // Remove all past appointments
+                _context.Appointments.RemoveRange(pastAppointments);
+                await _context.SaveChangesAsync();
+
+                return Ok(new
+                {
+                    message = $"Successfully cleared {pastAppointments.Count} past appointment(s)."
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error clearing past appointments: " + ex.Message });
+            }
+        }
     }
 
 

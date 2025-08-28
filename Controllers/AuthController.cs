@@ -27,7 +27,7 @@ namespace BarberShopAPI.Controllers
         public async Task<ActionResult<LoginResponse>> Login(LoginRequest request)
         {
             var admin = await _context.Admins
-                .FirstOrDefaultAsync(a => a.Username == request.Username && a.IsActive);
+                .FirstOrDefaultAsync(a => a.Username.ToLower() == request.Username.ToLower() && a.IsActive);
 
             if (admin == null || !BCrypt.Net.BCrypt.Verify(request.Password, admin.PasswordHash))
             {

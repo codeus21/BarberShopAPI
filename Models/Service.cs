@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BarberShopAPI.Server.Models
 {
-    public class Service
+    public class Service : ITenantEntity
     {
         public int Id { get; set; }
 
@@ -22,7 +22,11 @@ namespace BarberShopAPI.Server.Models
 
         public bool IsActive { get; set; } = true;
 
-        // Navigation property
-        public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
+        // Multi-tenant support
+        public int TenantId { get; set; }
+
+        // Navigation properties
+        public virtual BarberShop Tenant { get; set; } = null!;
+        public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
     }
 }

@@ -1,39 +1,34 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using BarberShopAPI.Server.Data;
+using BarberShopAPI.Server.Repositories;
 using BarberShopAPI.Server.Models;
 
-namespace BarberShopAPI.Controllers
+namespace BarberShopAPI.Server.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     public class AppointmentsController : ControllerBase
     {
-        private readonly BarberShopContext _context;
+        private readonly AppointmentRepository _appointmentRepository;
+        private readonly ServiceRepository _serviceRepository;
 
-        public AppointmentsController(BarberShopContext context)
+        public AppointmentsController(AppointmentRepository appointmentRepository, ServiceRepository serviceRepository)
         {
-            _context = context;
+            _appointmentRepository = appointmentRepository;
+            _serviceRepository = serviceRepository;
         }
 
         // GET: api/Appointments
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Appointment>>> GetAppointments()
         {
-            return await _context.Appointments
-                .Include(a => a.Service)
-                .OrderByDescending(a => a.AppointmentDate)
-                .ThenBy(a => a.AppointmentTime)
-                .ToListAsync();
+            return await _appointmentRepository.GetUpcomingAppointmentsAsync();
         }
 
         // GET: api/Appointments/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Appointment>> GetAppointment(int id)
         {
-            var appointment = await _context.Appointments
-                .Include(a => a.Service)
-                .FirstOrDefaultAsync(a => a.Id == id);
+            var appointment = await _appointmentRepository.GetByIdAsync(id);
 
             if (appointment == null)
             {
@@ -48,19 +43,17 @@ namespace BarberShopAPI.Controllers
         public async Task<ActionResult<Appointment>> CreateAppointment(Appointment appointment)
         {
             // Check if the time slot is available
-            var existingAppointment = await _context.Appointments
-                .FirstOrDefaultAsync(a =>
-                    a.AppointmentDate == appointment.AppointmentDate &&
-                    a.AppointmentTime == appointment.AppointmentTime &&
-                    a.Status != "Cancelled");
+            var isAvailable = await _appointmentRepository.IsTimeSlotAvailableAsync(
+                appointment.AppointmentDate, 
+                appointment.AppointmentTime);
 
-            if (existingAppointment != null)
+            if (!isAvailable)
             {
                 return BadRequest("This time slot is already booked.");
             }
 
-            // Validate service exists and load it
-            var service = await _context.Services.FindAsync(appointment.ServiceId);
+            // Validate service exists
+            var service = await _serviceRepository.GetByIdAsync(appointment.ServiceId);
             if (service == null)
             {
                 return BadRequest("Invalid service selected.");
@@ -80,15 +73,8 @@ namespace BarberShopAPI.Controllers
                 CreatedAt = DateTime.UtcNow
             };
 
-            _context.Appointments.Add(newAppointment);
-            await _context.SaveChangesAsync();
-
-            // Return the appointment with service details
-            var createdAppointment = await _context.Appointments
-                .Include(a => a.Service)
-                .FirstOrDefaultAsync(a => a.Id == newAppointment.Id);
-
-            return CreatedAtAction(nameof(GetAppointment), new { id = newAppointment.Id }, createdAppointment);
+            var createdAppointment = await _appointmentRepository.AddAsync(newAppointment);
+            return CreatedAtAction(nameof(GetAppointment), new { id = createdAppointment.Id }, createdAppointment);
         }
 
         // GET: api/Appointments/available-slots/2024-01-15
@@ -102,11 +88,12 @@ namespace BarberShopAPI.Controllers
             "13:00:00", "14:00:00", "15:00:00", "16:00:00", "17:00:00", "18:00:00", "19:00:00"
             };
 
-            // Get booked slots for the date
-            var bookedSlots = await _context.Appointments
-                .Where(a => a.AppointmentDate == date && a.Status != "Cancelled")
+            // Get appointments for the date
+            var appointments = await _appointmentRepository.GetAppointmentsByDateAsync(date);
+            var bookedSlots = appointments
+                .Where(a => a.Status != "Cancelled")
                 .Select(a => a.AppointmentTime.ToString(@"hh\:mm\:ss"))
-                .ToListAsync();
+                .ToList();
 
             // Return available slots
             var availableSlots = timeSlots.Where(slot => !bookedSlots.Contains(slot)).ToList();

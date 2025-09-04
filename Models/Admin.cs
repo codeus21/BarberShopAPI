@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BarberShopAPI.Server.Models
 {
-    public class Admin
+    public class Admin : ITenantEntity
     {
         public int Id { get; set; }
 
@@ -23,5 +23,11 @@ namespace BarberShopAPI.Server.Models
         public bool IsActive { get; set; } = true;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // Multi-tenant support
+        public int TenantId { get; set; }
+
+        // Navigation property
+        public virtual BarberShop Tenant { get; set; } = null!;
     }
 }

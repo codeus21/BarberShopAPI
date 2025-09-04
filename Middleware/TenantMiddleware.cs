@@ -20,6 +20,14 @@ namespace BarberShopAPI.Server.Middleware
         {
             try
             {
+                // Skip tenant resolution for health check endpoints
+                var path = context.Request.Path.Value?.ToLower();
+                if (path == "/health" || path == "/api/health" || path?.StartsWith("/health") == true)
+                {
+                    await _next(context);
+                    return;
+                }
+
                 var tenant = await ExtractTenantAsync(context, dbContext);
                 
                 if (tenant == null)

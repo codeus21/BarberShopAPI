@@ -12,4 +12,16 @@ namespace BarberShopAPI.Server.Controllers
             return Ok(new { status = "healthy", timestamp = DateTime.UtcNow });
         }
     }
+
+    // Simple health check for Railway (no tenant required)
+    [ApiController]
+    [Route("")]
+    public class RailwayHealthController : ControllerBase
+    {
+        [HttpGet("health")]
+        public IActionResult Get()
+        {
+            return Ok(new { status = "healthy", timestamp = DateTime.UtcNow });
+        }
+    }
 }

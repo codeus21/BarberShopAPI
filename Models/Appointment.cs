@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BarberShopAPI.Server.Models
 {
-    public class Appointment
+    public class Appointment : ITenantEntity
     {
         public int Id { get; set; }
 
@@ -40,7 +40,11 @@ namespace BarberShopAPI.Server.Models
 
         public DateTime? UpdatedAt { get; set; }
 
-        // Navigation property
-        public Service? Service { get; set; }
+        // Multi-tenant support
+        public int TenantId { get; set; }
+
+        // Navigation properties
+        public virtual BarberShop Tenant { get; set; } = null!;
+        public virtual Service? Service { get; set; }
     }
 }

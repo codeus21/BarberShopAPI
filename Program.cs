@@ -7,6 +7,8 @@ using Microsoft.OpenApi.Models;
 using BarberShopAPI.Server.Models;
 using BarberShopAPI.Server.Controllers;
 using BarberShopAPI.Server.Services;
+using BarberShopAPI.Server.Middleware;
+using BarberShopAPI.Server.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,6 +55,14 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddDbContext<BarberShopContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Add HTTP Context Accessor for repositories
+builder.Services.AddHttpContextAccessor();
+
+// Add repositories
+builder.Services.AddScoped<ServiceRepository>();
+builder.Services.AddScoped<AppointmentRepository>();
+builder.Services.AddScoped<AdminRepository>();
+
 // Add Background Service for appointment cleanup
 builder.Services.AddHostedService<AppointmentCleanupService>();
 
@@ -91,18 +101,26 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
-app.Urls.Clear();
-app.Urls.Add($"http://0.0.0.0:{port}");
+// Only override URLs for Railway deployment
+if (!app.Environment.IsDevelopment())
+{
+    var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+    app.Urls.Clear();
+    app.Urls.Add($"http://0.0.0.0:{port}");
+}
 
 // Configure the HTTP request pipeline.
-app.UseSwagger();
-app.UseSwaggerUI();
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+// IMPORTANT: Add tenant middleware BEFORE other middleware
+app.UseTenantMiddleware();
 
 app.UseHttpsRedirection();
-
 app.UseCors("AllowReactApp");
-
 app.UseAuthentication();
 app.UseAuthorization();
 

@@ -10,6 +10,10 @@ namespace BarberShopAPI.Server.Data
         {
         }
 
+        // Master table for barber shops
+        public DbSet<BarberShop> BarberShops { get; set; }
+
+        // Existing tables (now with tenant support)
         public DbSet<Service> Services { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
         public DbSet<Admin> Admins { get; set; }
@@ -18,97 +22,162 @@ namespace BarberShopAPI.Server.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // Configure Service entity
+            // Configure BarberShop entity
+            modelBuilder.Entity<BarberShop>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Subdomain).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.AdminEmail).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.AdminPasswordHash).IsRequired().HasMaxLength(255);
+                entity.Property(e => e.BusinessPhone).HasMaxLength(20);
+                entity.Property(e => e.BusinessAddress).HasMaxLength(255);
+                entity.Property(e => e.BusinessHours).HasMaxLength(500);
+                entity.Property(e => e.LogoUrl).HasMaxLength(255);
+                entity.Property(e => e.ThemeColor).HasMaxLength(7).HasDefaultValue("#D4AF37");
+                
+                entity.HasIndex(e => e.Subdomain).IsUnique();
+                entity.ToTable("barbershops"); // Lowercase for PostgreSQL
+            });
+
+            // Configure Service entity with tenant relationship
             modelBuilder.Entity<Service>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Description).HasMaxLength(500);
                 entity.Property(e => e.Price).HasColumnType("decimal(10,2)");
-                entity.Property(e => e.DurationMinutes).IsRequired();
+                
+                // Tenant relationship
+                entity.HasOne(e => e.Tenant)
+                      .WithMany(t => t.Services)
+                      .HasForeignKey(e => e.TenantId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                
+                entity.ToTable("services");
             });
 
-            // Configure Appointment entity
+            // Configure Appointment entity with tenant relationship
             modelBuilder.Entity<Appointment>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.AppointmentDate).HasColumnType("date");
-                entity.Property(e => e.AppointmentTime).HasColumnType("time");
                 entity.Property(e => e.CustomerName).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.CustomerEmail).IsRequired().HasMaxLength(100);
                 entity.Property(e => e.CustomerPhone).IsRequired().HasMaxLength(20);
-                entity.Property(e => e.CustomerEmail).HasMaxLength(200);
                 entity.Property(e => e.Notes).HasMaxLength(500);
-                entity.Property(e => e.Status).IsRequired().HasMaxLength(20);
-
-                // Foreign key relationship
+                entity.Property(e => e.Status).HasMaxLength(50).HasDefaultValue("Confirmed");
+                
+                // Tenant relationship
+                entity.HasOne(e => e.Tenant)
+                      .WithMany(t => t.Appointments)
+                      .HasForeignKey(e => e.TenantId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                
+                // Service relationship
                 entity.HasOne(e => e.Service)
-                    .WithMany(s => s.Appointments)
-                    .HasForeignKey(e => e.ServiceId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                      .WithMany(s => s.Appointments)
+                      .HasForeignKey(e => e.ServiceId)
+                      .OnDelete(DeleteBehavior.Restrict);
+                
+                entity.ToTable("appointments");
             });
 
-            // Seed initial services
+            // Configure Admin entity with tenant relationship
+            modelBuilder.Entity<Admin>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Username).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.PasswordHash).IsRequired().HasMaxLength(255);
+                entity.Property(e => e.Email).HasMaxLength(100);
+                
+                // Tenant relationship
+                entity.HasOne(e => e.Tenant)
+                      .WithMany(t => t.Admins)
+                      .HasForeignKey(e => e.TenantId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                
+                entity.ToTable("admins");
+            });
+
+            // Seed default tenant and data
+            SeedData(modelBuilder);
+        }
+
+        private void SeedData(ModelBuilder modelBuilder)
+        {
+            // Seed default barber shop
+            modelBuilder.Entity<BarberShop>().HasData(
+                new BarberShop
+                {
+                    Id = 1,
+                    Name = "The Barber Book",
+                    Subdomain = "default",
+                    AdminEmail = "admin@thebarberbook.com",
+                    AdminPasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"), // Default password
+                    IsActive = true,
+                    CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                    UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                }
+            );
+
+            // Seed default services
             modelBuilder.Entity<Service>().HasData(
                 new Service
                 {
                     Id = 1,
+                    TenantId = 1,
                     Name = "Classic Haircut",
-                    Price = 35.00m,
-                    DurationMinutes = 50,
-                    Description = "Professional haircut with consultation, wash, cut, and style.",
+                    Description = "Professional haircut with styling",
+                    Price = 25.00m,
+                    DurationMinutes = 60,
                     IsActive = true
                 },
                 new Service
                 {
                     Id = 2,
-                    Name = "Haircut with Designs",
-                    Price = 40.00m,
-                    DurationMinutes = 60,
-                    Description = "Creative haircut with custom designs, fades, and artistic styling.",
+                    TenantId = 1,
+                    Name = "Design",
+                    Description = "Creative hair design and styling",
+                    Price = 10.00m,
+                    DurationMinutes = 30,
                     IsActive = true
                 },
                 new Service
                 {
                     Id = 3,
-                    Name = "Beard & Mustache Trim",
-                    Price = 10.00m,
-                    DurationMinutes = 10,
-                    Description = "Professional beard and mustache trimming with shaping and styling.",
+                    TenantId = 1,
+                    Name = "Beard Trimming",
+                    Description = "Professional beard trimming and shaping",
+                    Price = 15.00m,
+                    DurationMinutes = 30,
                     IsActive = true
                 },
                 new Service
                 {
                     Id = 4,
-                    Name = "Eyebrow Shaping",
-                    Price = 5.00m,
-                    DurationMinutes = 5,
-                    Description = "Precision eyebrow shaping and grooming for a polished look.",
+                    TenantId = 1,
+                    Name = "Eyebrows",
+                    Description = "Eyebrow trimming and shaping",
+                    Price = 8.00m,
+                    DurationMinutes = 15,
                     IsActive = true
                 }
             );
 
-            // In OnModelCreating method, add:
-            modelBuilder.Entity<Admin>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.Username).IsRequired().HasMaxLength(100);
-                entity.Property(e => e.PasswordHash).IsRequired();
-                entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
-                entity.Property(e => e.Email).HasMaxLength(200);
-            });
-
-            // Seed admin user (password: admin123)
-            //modelBuilder.Entity<Admin>().HasData(
-            //new Admin
-            //{
-            //    Id = 1,
-            //    Username = "admin",
-            //    PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
-            //    Name = "Barber Admin",
-            //    Email = "admin@barbershop.com",
-            //    IsActive = true,
-            //    CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-            //}
-            //);
+            // Seed default admin
+            modelBuilder.Entity<Admin>().HasData(
+                new Admin
+                {
+                    Id = 1,
+                    TenantId = 1,
+                    Username = "admin",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
+                    Name = "Barber Admin",
+                    Email = "admin@thebarberbook.com",
+                    IsActive = true,
+                    CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                }
+            );
         }
     }
 }

@@ -20,9 +20,9 @@ namespace BarberShopAPI.Server.Middleware
         {
             try
             {
-                // Skip tenant resolution for health check endpoints
+                // Skip tenant resolution for non-tenant endpoints
                 var path = context.Request.Path.Value?.ToLower();
-                if (path == "/health" || path == "/api/health" || path?.StartsWith("/health") == true)
+                if (ShouldSkipTenantResolution(path))
                 {
                     await _next(context);
                     return;
@@ -96,6 +96,38 @@ namespace BarberShopAPI.Server.Middleware
             }
 
             return null;
+        }
+
+        private bool ShouldSkipTenantResolution(string? path)
+        {
+            if (string.IsNullOrEmpty(path))
+                return false;
+
+            // Skip tenant resolution for these paths
+            var skipPaths = new[]
+            {
+                "/health",
+                "/api/health",
+                "/swagger",
+                "/swagger/",
+                "/swagger/index.html",
+                "/swagger/v1/swagger.json",
+                "/favicon.ico",
+                "/",
+                "/api/tenant" // Allow tenant management endpoints
+            };
+
+            // Check exact matches
+            if (skipPaths.Contains(path))
+                return true;
+
+            // Check if path starts with any skip pattern
+            if (path.StartsWith("/health") || 
+                path.StartsWith("/swagger") || 
+                path.StartsWith("/api/tenant"))
+                return true;
+
+            return false;
         }
 
         private string? ExtractSubdomain(string host)

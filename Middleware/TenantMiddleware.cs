@@ -139,6 +139,15 @@ namespace BarberShopAPI.Server.Middleware
 
         private string? ExtractSubdomain(string host)
         {
+            // Skip Railway and other hosting platform hostnames
+            if (host.Contains("railway.app") || 
+                host.Contains("vercel.app") || 
+                host.Contains("localhost") ||
+                host.Contains("127.0.0.1"))
+            {
+                return null;
+            }
+
             var parts = host.Split('.');
             if (parts.Length >= 3)
             {

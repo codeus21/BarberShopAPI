@@ -110,11 +110,9 @@ if (!app.Environment.IsDevelopment())
 }
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// Enable Swagger in both Development and Production for API documentation
+app.UseSwagger();
+app.UseSwaggerUI();
 
 // IMPORTANT: Add tenant middleware BEFORE other middleware
 app.UseTenantMiddleware();

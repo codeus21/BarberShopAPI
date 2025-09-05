@@ -51,7 +51,7 @@ namespace BarberShopAPI.Server.Middleware
                 context.Items["Tenant"] = tenant;
                 context.Items["TenantSubdomain"] = tenant.Subdomain;
 
-                _logger.LogDebug("Tenant resolved: {TenantId} - {Subdomain}", tenant.Id, tenant.Subdomain);
+                _logger.LogInformation("Tenant resolved and stored: {TenantId} - {Subdomain} - {Name}", tenant.Id, tenant.Subdomain, tenant.Name);
             }
             catch (Exception ex)
             {

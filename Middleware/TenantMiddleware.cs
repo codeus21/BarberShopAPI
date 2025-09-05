@@ -68,10 +68,12 @@ namespace BarberShopAPI.Server.Middleware
         {
             // Method 1: Extract from subdomain (e.g., barbershop1.thebarberbook.com)
             var host = context.Request.Host.Host;
+            _logger.LogInformation("Extracting tenant for host: {Host}", host);
             var subdomain = ExtractSubdomain(host);
             
             if (!string.IsNullOrEmpty(subdomain))
             {
+                _logger.LogInformation("Found subdomain: {Subdomain}", subdomain);
                 return await dbContext.BarberShops
                     .FirstOrDefaultAsync(b => b.Subdomain == subdomain);
             }
@@ -94,10 +96,12 @@ namespace BarberShopAPI.Server.Middleware
                 context.Request.Host.Host.Contains("vercel.app") ||
                 context.Request.Host.Host.Contains("railway"))
             {
+                _logger.LogInformation("Using default tenant for host: {Host}", host);
                 return await dbContext.BarberShops
                     .FirstOrDefaultAsync(b => b.Subdomain == "default");
             }
 
+            _logger.LogWarning("No tenant found for host: {Host}", host);
             return null;
         }
 

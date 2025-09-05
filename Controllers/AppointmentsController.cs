@@ -70,7 +70,8 @@ namespace BarberShopAPI.Server.Controllers
                 CustomerEmail = appointment.CustomerEmail,
                 Notes = appointment.Notes,
                 Status = "Confirmed",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                TenantId = 0 // This will be set by the repository
             };
 
             var createdAppointment = await _appointmentRepository.AddAsync(newAppointment);

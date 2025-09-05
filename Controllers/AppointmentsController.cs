@@ -40,12 +40,18 @@ namespace BarberShopAPI.Server.Controllers
 
         // POST: api/Appointments
         [HttpPost]
-        public async Task<ActionResult<Appointment>> CreateAppointment(Appointment appointment)
+        public async Task<ActionResult<Appointment>> CreateAppointment(CreateAppointmentRequest request)
         {
+            // Parse the time string to TimeSpan
+            if (!TimeSpan.TryParse(request.AppointmentTime, out var appointmentTime))
+            {
+                return BadRequest("Invalid time format. Please use HH:MM:SS format.");
+            }
+
             // Check if the time slot is available
             var isAvailable = await _appointmentRepository.IsTimeSlotAvailableAsync(
-                appointment.AppointmentDate, 
-                appointment.AppointmentTime);
+                request.AppointmentDate, 
+                appointmentTime);
 
             if (!isAvailable)
             {
@@ -53,7 +59,7 @@ namespace BarberShopAPI.Server.Controllers
             }
 
             // Validate service exists
-            var service = await _serviceRepository.GetByIdAsync(appointment.ServiceId);
+            var service = await _serviceRepository.GetByIdAsync(request.ServiceId);
             if (service == null)
             {
                 return BadRequest("Invalid service selected.");
@@ -62,14 +68,14 @@ namespace BarberShopAPI.Server.Controllers
             // Create a new appointment object to avoid validation issues
             var newAppointment = new Appointment
             {
-                ServiceId = appointment.ServiceId,
-                AppointmentDate = appointment.AppointmentDate,
-                AppointmentTime = appointment.AppointmentTime,
-                CustomerName = appointment.CustomerName,
-                CustomerPhone = appointment.CustomerPhone,
-                CustomerEmail = appointment.CustomerEmail,
-                Notes = appointment.Notes,
-                Status = "Confirmed",
+                ServiceId = request.ServiceId,
+                AppointmentDate = request.AppointmentDate,
+                AppointmentTime = appointmentTime,
+                CustomerName = request.CustomerName,
+                CustomerPhone = request.CustomerPhone,
+                CustomerEmail = request.CustomerEmail,
+                Notes = request.Notes,
+                Status = request.Status,
                 CreatedAt = DateTime.UtcNow,
                 TenantId = 0 // This will be set by the repository
             };

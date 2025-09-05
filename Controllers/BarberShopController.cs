@@ -24,27 +24,21 @@ namespace BarberShopAPI.Server.Controllers
         [HttpGet("current")]
         public async Task<ActionResult<BarberShop>> GetCurrentBarberShop()
         {
-            _logger.LogInformation("GetCurrentBarberShop called");
-            
             if (!HttpContext.Items.ContainsKey("TenantId"))
             {
-                _logger.LogError("TenantId not found in HttpContext.Items");
                 return BadRequest("TenantId not found in context");
             }
             
             var tenantId = (int)HttpContext.Items["TenantId"]!;
-            _logger.LogInformation("Using TenantId: {TenantId}", tenantId);
             
             var barberShop = await _context.BarberShops
                 .FirstOrDefaultAsync(b => b.Id == tenantId);
 
             if (barberShop == null)
             {
-                _logger.LogWarning("BarberShop not found for TenantId: {TenantId}", tenantId);
                 return NotFound();
             }
 
-            _logger.LogInformation("Found BarberShop: {Name} (ID: {Id})", barberShop.Name, barberShop.Id);
             return Ok(barberShop);
         }
 

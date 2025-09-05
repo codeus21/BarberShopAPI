@@ -91,7 +91,8 @@ namespace BarberShopAPI.Server.Middleware
             // Method 3: Default tenant for development and direct API access
             if (context.Request.Host.Host.Contains("localhost") || 
                 context.Request.Host.Host.Contains("railway.app") ||
-                context.Request.Host.Host.Contains("vercel.app"))
+                context.Request.Host.Host.Contains("vercel.app") ||
+                context.Request.Host.Host.Contains("railway"))
             {
                 return await dbContext.BarberShops
                     .FirstOrDefaultAsync(b => b.Subdomain == "default");

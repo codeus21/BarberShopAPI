@@ -110,6 +110,8 @@ namespace BarberShopAPI.Server.Middleware
             if (string.IsNullOrEmpty(path))
                 return false;
 
+            _logger.LogInformation("Checking if should skip tenant resolution for path: {Path}", path);
+
             // Skip tenant resolution for these paths
             var skipPaths = new[]
             {
@@ -126,14 +128,21 @@ namespace BarberShopAPI.Server.Middleware
 
             // Check exact matches
             if (skipPaths.Contains(path))
+            {
+                _logger.LogInformation("Skipping tenant resolution for exact match: {Path}", path);
                 return true;
+            }
 
             // Check if path starts with any skip pattern
             if (path.StartsWith("/health") || 
                 path.StartsWith("/swagger") || 
                 path.StartsWith("/api/tenant"))
+            {
+                _logger.LogInformation("Skipping tenant resolution for path starting with pattern: {Path}", path);
                 return true;
+            }
 
+            _logger.LogInformation("Will process tenant resolution for path: {Path}", path);
             return false;
         }
 

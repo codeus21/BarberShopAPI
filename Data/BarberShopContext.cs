@@ -128,7 +128,7 @@ namespace BarberShopAPI.Server.Data
                     TenantId = 1,
                     Name = "Classic Haircut",
                     Description = "Professional haircut with styling",
-                    Price = 25.00m,
+                    Price = 30.00m,
                     DurationMinutes = 60,
                     IsActive = true
                 },
@@ -139,7 +139,7 @@ namespace BarberShopAPI.Server.Data
                     Name = "Design",
                     Description = "Creative hair design and styling",
                     Price = 10.00m,
-                    DurationMinutes = 30,
+                    DurationMinutes = 0,
                     IsActive = true
                 },
                 new Service
@@ -148,8 +148,8 @@ namespace BarberShopAPI.Server.Data
                     TenantId = 1,
                     Name = "Beard Trimming",
                     Description = "Professional beard trimming and shaping",
-                    Price = 15.00m,
-                    DurationMinutes = 30,
+                    Price = 5.00m,
+                    DurationMinutes = 0,
                     IsActive = true
                 },
                 new Service
@@ -158,8 +158,8 @@ namespace BarberShopAPI.Server.Data
                     TenantId = 1,
                     Name = "Eyebrows",
                     Description = "Eyebrow trimming and shaping",
-                    Price = 8.00m,
-                    DurationMinutes = 15,
+                    Price = 5.00m,
+                    DurationMinutes = 0,
                     IsActive = true
                 }
             );

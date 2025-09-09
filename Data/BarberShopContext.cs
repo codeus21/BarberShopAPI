@@ -110,10 +110,13 @@ namespace BarberShopAPI.Server.Data
                 new BarberShop
                 {
                     Id = 1,
-                    Name = "The Barber Book",
+                    Name = "Clean Cuts",
                     Subdomain = "default",
-                    AdminEmail = "admin@thebarberbook.com",
+                    AdminEmail = "CleanCuts@thebarberbook.com",
                     AdminPasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"), // Default password
+                    BusinessPhone = "(123) 456-7890",
+                    BusinessAddress = "123 Main Street",
+                    BusinessHours = "Mon-Fri: 9AM-6PM, Sat: 9AM-4PM, Sun: Closed",
                     IsActive = true,
                     CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                     UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
@@ -138,8 +141,8 @@ namespace BarberShopAPI.Server.Data
                     TenantId = 1,
                     Name = "Design",
                     Description = "Creative hair design and styling",
-                    Price = 10.00m,
-                    DurationMinutes = 0,
+                    Price = 5.00m,
+                    DurationMinutes = 10,
                     IsActive = true
                 },
                 new Service
@@ -149,7 +152,7 @@ namespace BarberShopAPI.Server.Data
                     Name = "Beard Trimming",
                     Description = "Professional beard trimming and shaping",
                     Price = 5.00m,
-                    DurationMinutes = 0,
+                    DurationMinutes = 10,
                     IsActive = true
                 },
                 new Service
@@ -159,7 +162,7 @@ namespace BarberShopAPI.Server.Data
                     Name = "Eyebrows",
                     Description = "Eyebrow trimming and shaping",
                     Price = 5.00m,
-                    DurationMinutes = 0,
+                    DurationMinutes = 5,
                     IsActive = true
                 }
             );

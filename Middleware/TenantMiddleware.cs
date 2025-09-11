@@ -64,34 +64,47 @@ namespace BarberShopAPI.Server.Middleware
 
         private async Task<BarberShop?> ExtractTenantAsync(HttpContext context, BarberShopContext dbContext)
         {
-            // Method 1: Extract from subdomain (e.g., barbershop1.thebarberbook.com)
-            var host = context.Request.Host.Host;
+            // Method 1: Check for tenant parameter in URL (for testing)
+            var query = context.Request.Query;
+            if (query.ContainsKey("tenant"))
+            {
+                var tenantParam = query["tenant"].ToString().ToLower();
+                _logger.LogInformation("Using tenant parameter: {Tenant}", tenantParam);
+                return await dbContext.BarberShops
+                    .FirstOrDefaultAsync(b => b.Subdomain == tenantParam);
+            }
+
+            // Method 2: Extract from subdomain (e.g., elite.thebarberbook.com)
+            var host = context.Request.Host.Host.ToLower();
             var subdomain = ExtractSubdomain(host);
             
             if (!string.IsNullOrEmpty(subdomain))
             {
+                _logger.LogInformation("Using subdomain: {Subdomain}", subdomain);
                 return await dbContext.BarberShops
                     .FirstOrDefaultAsync(b => b.Subdomain == subdomain);
             }
 
-            // Method 2: Extract from URL path (e.g., /barbershop1/booker)
+            // Method 3: Extract from URL path (e.g., /elite/booker)
             var pathSegments = context.Request.Path.Value?.Split('/', StringSplitOptions.RemoveEmptyEntries);
             if (pathSegments?.Length > 0)
             {
                 var firstSegment = pathSegments[0];
                 if (firstSegment != "api" && firstSegment != "admin")
                 {
+                    _logger.LogInformation("Using path segment: {PathSegment}", firstSegment);
                     return await dbContext.BarberShops
                         .FirstOrDefaultAsync(b => b.Subdomain == firstSegment);
                 }
             }
 
-            // Method 3: Default tenant for development and direct API access
-            if (context.Request.Host.Host.Contains("localhost") || 
-                context.Request.Host.Host.Contains("railway.app") ||
-                context.Request.Host.Host.Contains("vercel.app") ||
-                context.Request.Host.Host.Contains("railway"))
+            // Method 4: Default tenant for development and direct API access
+            if (host.Contains("localhost") || 
+                host.Contains("railway.app") ||
+                host.Contains("vercel.app") ||
+                host.Contains("railway"))
             {
+                _logger.LogInformation("Using default tenant for development");
                 return await dbContext.BarberShops
                     .FirstOrDefaultAsync(b => b.Subdomain == "default");
             }
@@ -137,7 +150,7 @@ namespace BarberShopAPI.Server.Middleware
 
         private string? ExtractSubdomain(string host)
         {
-            // Skip Railway and other hosting platform hostnames
+            // Skip Railway and other hosting platform hostnames for direct API access
             if (host.Contains("railway.app") || 
                 host.Contains("vercel.app") || 
                 host.Contains("localhost") ||
@@ -146,10 +159,21 @@ namespace BarberShopAPI.Server.Middleware
                 return null;
             }
 
+            // Extract subdomain from hostname
+            // Examples: 
+            // - elite.thebarberbook.com -> elite
+            // - default.thebarberbook.com -> default
+            // - barbershop1.example.com -> barbershop1
             var parts = host.Split('.');
             if (parts.Length >= 3)
             {
-                return parts[0];
+                var subdomain = parts[0];
+                // Skip common subdomains that aren't tenant names
+                var skipSubdomains = new[] { "www", "api", "admin", "app", "www2", "mail" };
+                if (!skipSubdomains.Contains(subdomain.ToLower()))
+                {
+                    return subdomain.ToLower();
+                }
             }
             return null;
         }

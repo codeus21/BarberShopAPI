@@ -38,6 +38,15 @@ namespace BarberShopAPI.Server.Models
         [MaxLength(7)]
         public string ThemeColor { get; set; } = "#D4AF37";
         
+        [MaxLength(7)]
+        public string SecondaryColor { get; set; } = "#000000";
+        
+        [MaxLength(50)]
+        public string FontFamily { get; set; } = "Arial, sans-serif";
+        
+        [MaxLength(1000)]
+        public string? CustomCss { get; set; }
+        
         public bool IsActive { get; set; } = true;
         
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

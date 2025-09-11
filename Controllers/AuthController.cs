@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Text;
 using BarberShopAPI.Server.Data;
 using BarberShopAPI.Server.Models;
+using BarberShopAPI.Server.Helpers;
 using BCrypt.Net;
 
 namespace BarberShopAPI.Controllers
@@ -26,8 +27,12 @@ namespace BarberShopAPI.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<LoginResponse>> Login(LoginRequest request)
         {
+            var tenantId = TenantHelper.GetCurrentTenantId(HttpContext);
+            
             var admin = await _context.Admins
-                .FirstOrDefaultAsync(a => a.Username.ToLower() == request.Username.ToLower() && a.IsActive);
+                .FirstOrDefaultAsync(a => a.Username.ToLower() == request.Username.ToLower() && 
+                                        a.TenantId == tenantId && 
+                                        a.IsActive);
 
             if (admin == null || !BCrypt.Net.BCrypt.Verify(request.Password, admin.PasswordHash))
             {

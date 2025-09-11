@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using BarberShopAPI.Server.Data;
 using BarberShopAPI.Server.Models;
+using BarberShopAPI.Server.Helpers;
 
 namespace BarberShopAPI.Controllers
 {
@@ -22,8 +23,11 @@ namespace BarberShopAPI.Controllers
         [HttpGet("appointments")]
         public async Task<ActionResult<IEnumerable<object>>> GetAppointments()
         {
+            var tenantId = TenantHelper.GetCurrentTenantId(HttpContext);
+            
             var appointments = await _context.Appointments
                 .Include(a => a.Service)
+                .Where(a => a.TenantId == tenantId) // Filter by tenant
                 .OrderByDescending(a => a.AppointmentDate)
                 .ThenBy(a => a.AppointmentTime)
                 .Select(a => new
@@ -48,7 +52,11 @@ namespace BarberShopAPI.Controllers
         [HttpPut("appointments/{id}/cancel")]
         public async Task<IActionResult> CancelAppointment(int id)
         {
-            var appointment = await _context.Appointments.FindAsync(id);
+            var tenantId = TenantHelper.GetCurrentTenantId(HttpContext);
+            
+            var appointment = await _context.Appointments
+                .FirstOrDefaultAsync(a => a.Id == id && a.TenantId == tenantId);
+            
             if (appointment == null)
             {
                 return NotFound();
@@ -65,7 +73,11 @@ namespace BarberShopAPI.Controllers
         [HttpPut("appointments/{id}/reschedule")]
         public async Task<IActionResult> RescheduleAppointment(int id, [FromBody] RescheduleRequest request)
         {
-            var appointment = await _context.Appointments.FindAsync(id);
+            var tenantId = TenantHelper.GetCurrentTenantId(HttpContext);
+            
+            var appointment = await _context.Appointments
+                .FirstOrDefaultAsync(a => a.Id == id && a.TenantId == tenantId);
+            
             if (appointment == null)
             {
                 return NotFound();
@@ -77,9 +89,10 @@ namespace BarberShopAPI.Controllers
                 return BadRequest("Invalid time format. Use HH:MM:SS format.");
             }
 
-            // Check if new time slot is available
+            // Check if new time slot is available (within same tenant)
             var existingAppointment = await _context.Appointments
                 .FirstOrDefaultAsync(a =>
+                    a.TenantId == tenantId &&
                     a.AppointmentDate == request.NewDate.Date &&
                     a.AppointmentTime == newTime &&
                     a.Status != "Cancelled" &&
@@ -101,11 +114,14 @@ namespace BarberShopAPI.Controllers
         [HttpPost("cleanup-completed")]
         public async Task<IActionResult> CleanupCompletedAppointments()
         {
+            var tenantId = TenantHelper.GetCurrentTenantId(HttpContext);
             var yesterday = DateTime.Today.AddDays(-1);
 
-            // Get all confirmed appointments from past dates (including today but past times)
+            // Get all confirmed appointments from past dates (within tenant)
             var pastAppointments = await _context.Appointments
-                .Where(a => a.AppointmentDate <= yesterday && a.Status == "Confirmed")
+                .Where(a => a.TenantId == tenantId && 
+                           a.AppointmentDate <= yesterday && 
+                           a.Status == "Confirmed")
                 .ToListAsync();
 
             if (pastAppointments.Any())
@@ -128,9 +144,12 @@ namespace BarberShopAPI.Controllers
         {
             try
             {
-                // Get all completed and cancelled appointments (past appointments)
+                var tenantId = TenantHelper.GetCurrentTenantId(HttpContext);
+                
+                // Get all completed and cancelled appointments (within tenant)
                 var pastAppointments = await _context.Appointments
-                    .Where(a => a.Status == "Completed" || a.Status == "Cancelled")
+                    .Where(a => a.TenantId == tenantId && 
+                               (a.Status == "Completed" || a.Status == "Cancelled"))
                     .ToListAsync();
 
                 if (!pastAppointments.Any())

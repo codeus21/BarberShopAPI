@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using BarberShopAPI.Server.Data;
 using BarberShopAPI.Server.Models;
+using BarberShopAPI.Server.Helpers;
 using BCrypt.Net;
 
 namespace BarberShopAPI.Server.Controllers
@@ -24,12 +25,7 @@ namespace BarberShopAPI.Server.Controllers
         [HttpGet("current")]
         public async Task<ActionResult<BarberShop>> GetCurrentBarberShop()
         {
-            if (!HttpContext.Items.ContainsKey("TenantId"))
-            {
-                return BadRequest("TenantId not found in context");
-            }
-            
-            var tenantId = (int)HttpContext.Items["TenantId"]!;
+            var tenantId = TenantHelper.GetCurrentTenantId(HttpContext);
             
             var barberShop = await _context.BarberShops
                 .FirstOrDefaultAsync(b => b.Id == tenantId);
@@ -46,7 +42,7 @@ namespace BarberShopAPI.Server.Controllers
         [HttpPut("current")]
         public async Task<IActionResult> UpdateCurrentBarberShop([FromBody] UpdateBarberShopRequest request)
         {
-            var tenantId = (int)HttpContext.Items["TenantId"]!;
+            var tenantId = TenantHelper.GetCurrentTenantId(HttpContext);
             
             var barberShop = await _context.BarberShops
                 .FirstOrDefaultAsync(b => b.Id == tenantId);
@@ -80,7 +76,7 @@ namespace BarberShopAPI.Server.Controllers
         [HttpPost("change-password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
         {
-            var tenantId = (int)HttpContext.Items["TenantId"]!;
+            var tenantId = TenantHelper.GetCurrentTenantId(HttpContext);
             
             var barberShop = await _context.BarberShops
                 .FirstOrDefaultAsync(b => b.Id == tenantId);

@@ -30,6 +30,7 @@ namespace BarberShopAPI.Controllers
             var tenantId = TenantHelper.GetCurrentTenantId(HttpContext);
             
             var admin = await _context.Admins
+                .Include(a => a.Tenant)
                 .FirstOrDefaultAsync(a => a.Username.ToLower() == request.Username.ToLower() && 
                                         a.TenantId == tenantId && 
                                         a.IsActive);
@@ -58,7 +59,9 @@ namespace BarberShopAPI.Controllers
             {
                 new Claim(ClaimTypes.NameIdentifier, admin.Id.ToString()),
                 new Claim(ClaimTypes.Name, admin.Username),
-                new Claim(ClaimTypes.Role, "Admin")
+                new Claim(ClaimTypes.Role, "Admin"),
+                new Claim("TenantId", admin.TenantId.ToString()),
+                new Claim("TenantSubdomain", admin.Tenant?.Subdomain ?? "default")
             };
 
             var token = new JwtSecurityToken(

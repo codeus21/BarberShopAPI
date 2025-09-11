@@ -4,10 +4,12 @@ using Microsoft.EntityFrameworkCore;
 using BarberShopAPI.Server.Data;
 using BarberShopAPI.Server.Models;
 using BarberShopAPI.Server.Helpers;
+using BarberShopAPI.Server.Attributes;
 
 namespace BarberShopAPI.Controllers
 {
     [Authorize(Roles = "Admin")]
+    [TenantAuthorize]
     [ApiController]
     [Route("api/[controller]")]
     public class AdminController : ControllerBase

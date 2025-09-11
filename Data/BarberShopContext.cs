@@ -35,6 +35,9 @@ namespace BarberShopAPI.Server.Data
                 entity.Property(e => e.BusinessHours).HasMaxLength(500);
                 entity.Property(e => e.LogoUrl).HasMaxLength(255);
                 entity.Property(e => e.ThemeColor).HasMaxLength(7).HasDefaultValue("#D4AF37");
+                entity.Property(e => e.SecondaryColor).HasMaxLength(7).HasDefaultValue("#000000");
+                entity.Property(e => e.FontFamily).HasMaxLength(50).HasDefaultValue("Arial, sans-serif");
+                entity.Property(e => e.CustomCss).HasMaxLength(1000);
                 
                 entity.HasIndex(e => e.Subdomain).IsUnique();
                 entity.ToTable("barbershops"); // Lowercase for PostgreSQL
@@ -105,7 +108,7 @@ namespace BarberShopAPI.Server.Data
 
         private void SeedData(ModelBuilder modelBuilder)
         {
-            // Seed default barber shop
+            // Seed barber shops
             modelBuilder.Entity<BarberShop>().HasData(
                 new BarberShop
                 {
@@ -117,6 +120,26 @@ namespace BarberShopAPI.Server.Data
                     BusinessPhone = "(123) 456-7890",
                     BusinessAddress = "123 Main Street",
                     BusinessHours = "Mon-Fri: 9AM-6PM, Sat: 9AM-4PM, Sun: Closed",
+                    ThemeColor = "#D4AF37",
+                    SecondaryColor = "#000000",
+                    FontFamily = "Arial, sans-serif",
+                    IsActive = true,
+                    CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                    UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new BarberShop
+                {
+                    Id = 2,
+                    Name = "Elite Cuts",
+                    Subdomain = "elite",
+                    AdminEmail = "admin@elitecuts.com",
+                    AdminPasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
+                    BusinessPhone = "(555) 123-4567",
+                    BusinessAddress = "456 Oak Street",
+                    BusinessHours = "Mon-Fri: 9AM-7PM, Sat: 9AM-5PM, Sun: Closed",
+                    ThemeColor = "#1E40AF",
+                    SecondaryColor = "#FFFFFF",
+                    FontFamily = "Georgia, serif",
                     IsActive = true,
                     CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                     UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
@@ -164,10 +187,51 @@ namespace BarberShopAPI.Server.Data
                     Price = 5.00m,
                     DurationMinutes = 5,
                     IsActive = true
+                },
+                // Elite Cuts Services
+                new Service
+                {
+                    Id = 5,
+                    TenantId = 2,
+                    Name = "Premium Haircut",
+                    Description = "Luxury haircut with premium styling",
+                    Price = 45.00m,
+                    DurationMinutes = 75,
+                    IsActive = true
+                },
+                new Service
+                {
+                    Id = 6,
+                    TenantId = 2,
+                    Name = "Beard Sculpting",
+                    Description = "Professional beard sculpting and design",
+                    Price = 15.00m,
+                    DurationMinutes = 20,
+                    IsActive = true
+                },
+                new Service
+                {
+                    Id = 7,
+                    TenantId = 2,
+                    Name = "Hair Styling",
+                    Description = "Professional hair styling and finishing",
+                    Price = 10.00m,
+                    DurationMinutes = 15,
+                    IsActive = true
+                },
+                new Service
+                {
+                    Id = 8,
+                    TenantId = 2,
+                    Name = "Eyebrow Design",
+                    Description = "Precision eyebrow design and shaping",
+                    Price = 8.00m,
+                    DurationMinutes = 10,
+                    IsActive = true
                 }
             );
 
-            // Seed default admin
+            // Seed admins
             modelBuilder.Entity<Admin>().HasData(
                 new Admin
                 {
@@ -177,6 +241,17 @@ namespace BarberShopAPI.Server.Data
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
                     Name = "Barber Admin",
                     Email = "admin@thebarberbook.com",
+                    IsActive = true,
+                    CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new Admin
+                {
+                    Id = 2,
+                    TenantId = 2,
+                    Username = "admin",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
+                    Name = "Elite Cuts Admin",
+                    Email = "admin@elitecuts.com",
                     IsActive = true,
                     CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                 }

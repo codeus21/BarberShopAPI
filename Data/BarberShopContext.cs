@@ -127,23 +127,63 @@ namespace BarberShopAPI.Server.Data
                     CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                     UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                 },
-                new BarberShop
-                {
-                    Id = 2,
-                    Name = "Elite Cuts",
-                    Subdomain = "elite",
-                    AdminEmail = "admin@elitecuts.com",
-                    AdminPasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
-                    BusinessPhone = "(555) 123-4567",
-                    BusinessAddress = "456 Oak Street",
-                    BusinessHours = "Mon-Fri: 9AM-7PM, Sat: 9AM-5PM, Sun: Closed",
-                    ThemeColor = "#1E40AF",
-                    SecondaryColor = "#FFFFFF",
-                    FontFamily = "Georgia, serif",
-                    IsActive = true,
-                    CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-                    UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-                }
+           new BarberShop
+           {
+               Id = 2,
+               Name = "Elite Cuts",
+               Subdomain = "elite",
+               AdminEmail = "admin@elitecuts.com",
+               AdminPasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
+               BusinessPhone = "(555) 123-4567",
+               BusinessAddress = "456 Oak Street",
+               BusinessHours = "Mon-Fri: 9AM-7PM, Sat: 9AM-5PM, Sun: Closed",
+               ThemeColor = "#8B5CF6",
+               SecondaryColor = "#F8FAFC",
+               FontFamily = "Inter, -apple-system, BlinkMacSystemFont, sans-serif",
+               CustomCss = @"
+                   .elite-premium { 
+                       background: linear-gradient(135deg, #8B5CF6 0%, #A855F7 50%, #C084FC 100%);
+                       color: white;
+                       border-radius: 12px;
+                       padding: 20px;
+                       box-shadow: 0 20px 40px rgba(139, 92, 246, 0.3);
+                   }
+                   .elite-gold { 
+                       background: linear-gradient(45deg, #F59E0B, #FCD34D);
+                       -webkit-background-clip: text;
+                       -webkit-text-fill-color: transparent;
+                       font-weight: 700;
+                   }
+                   .elite-card {
+                       background: rgba(255, 255, 255, 0.95);
+                       backdrop-filter: blur(10px);
+                       border: 1px solid rgba(139, 92, 246, 0.2);
+                       border-radius: 16px;
+                       box-shadow: 0 8px 32px rgba(139, 92, 246, 0.1);
+                   }
+                   .elite-button {
+                       background: linear-gradient(135deg, #8B5CF6, #A855F7);
+                       border: none;
+                       border-radius: 8px;
+                       color: white;
+                       font-weight: 600;
+                       transition: all 0.3s ease;
+                       box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+                   }
+                   .elite-button:hover {
+                       transform: translateY(-2px);
+                       box-shadow: 0 8px 25px rgba(139, 92, 246, 0.6);
+                   }
+                   .elite-nav {
+                       background: rgba(255, 255, 255, 0.95);
+                       backdrop-filter: blur(20px);
+                       border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+                   }
+               ",
+               IsActive = true,
+               CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+               UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+           }
             );
 
             // Seed default services
@@ -193,40 +233,50 @@ namespace BarberShopAPI.Server.Data
                 {
                     Id = 5,
                     TenantId = 2,
-                    Name = "Premium Haircut",
-                    Description = "Luxury haircut with premium styling",
-                    Price = 45.00m,
-                    DurationMinutes = 75,
+                    Name = "Signature Elite Cut",
+                    Description = "Our signature premium haircut with precision styling and luxury treatment",
+                    Price = 75.00m,
+                    DurationMinutes = 60,
                     IsActive = true
                 },
                 new Service
                 {
                     Id = 6,
                     TenantId = 2,
-                    Name = "Beard Sculpting",
-                    Description = "Professional beard sculpting and design",
-                    Price = 15.00m,
-                    DurationMinutes = 20,
+                    Name = "Royal Beard Sculpting",
+                    Description = "Master-level beard sculpting with premium oils and precision tools",
+                    Price = 65.00m,
+                    DurationMinutes = 45,
                     IsActive = true
                 },
                 new Service
                 {
                     Id = 7,
                     TenantId = 2,
-                    Name = "Hair Styling",
-                    Description = "Professional hair styling and finishing",
-                    Price = 10.00m,
-                    DurationMinutes = 15,
+                    Name = "Executive Hair Styling",
+                    Description = "Professional executive styling for business and special occasions",
+                    Price = 45.00m,
+                    DurationMinutes = 30,
                     IsActive = true
                 },
                 new Service
                 {
                     Id = 8,
                     TenantId = 2,
-                    Name = "Eyebrow Design",
-                    Description = "Precision eyebrow design and shaping",
-                    Price = 8.00m,
-                    DurationMinutes = 10,
+                    Name = "Luxury Eyebrow Design",
+                    Description = "Artisanal eyebrow shaping with precision and attention to detail",
+                    Price = 35.00m,
+                    DurationMinutes = 25,
+                    IsActive = true
+                },
+                new Service
+                {
+                    Id = 9,
+                    TenantId = 2,
+                    Name = "Complete Gentleman's Package",
+                    Description = "Full service: Haircut, beard sculpting, styling, and eyebrow design",
+                    Price = 150.00m,
+                    DurationMinutes = 90,
                     IsActive = true
                 }
             );

@@ -34,10 +34,9 @@ namespace BarberShopAPI.Server.Data
                 entity.Property(e => e.BusinessAddress).HasMaxLength(255);
                 entity.Property(e => e.BusinessHours).HasMaxLength(500);
                 entity.Property(e => e.LogoUrl).HasMaxLength(255);
-                entity.Property(e => e.ThemeColor).HasMaxLength(7).HasDefaultValue("#D4AF37");
-                entity.Property(e => e.SecondaryColor).HasMaxLength(7).HasDefaultValue("#000000");
-                entity.Property(e => e.FontFamily).HasMaxLength(50).HasDefaultValue("Arial, sans-serif");
-                entity.Property(e => e.CustomCss).HasMaxLength(1000);
+                entity.Property(e => e.ThemeColor).HasMaxLength(7).HasDefaultValue("#D4AF37").HasColumnName("themecolor");
+                entity.Property(e => e.SecondaryColor).HasMaxLength(7).HasDefaultValue("#000000").HasColumnName("secondarycolor");
+                entity.Property(e => e.FontFamily).HasMaxLength(50).HasDefaultValue("Arial, sans-serif").HasColumnName("fontfamily");
                 
                 entity.HasIndex(e => e.Subdomain).IsUnique();
                 entity.ToTable("barbershops"); // Lowercase for PostgreSQL
@@ -120,72 +119,25 @@ namespace BarberShopAPI.Server.Data
                     BusinessPhone = "(123) 456-7890",
                     BusinessAddress = "123 Main Street",
                     BusinessHours = "Mon-Fri: 9AM-6PM, Sat: 9AM-4PM, Sun: Closed",
-                    ThemeColor = "#D4AF37",
-                    SecondaryColor = "#000000",
-                    FontFamily = "Arial, sans-serif",
                     IsActive = true,
                     CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                     UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                 },
-           new BarberShop
-           {
-               Id = 2,
-               Name = "Elite Cuts",
-               Subdomain = "elite",
-               AdminEmail = "admin@elitecuts.com",
-               AdminPasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
-               BusinessPhone = "(555) 123-4567",
-               BusinessAddress = "456 Oak Street",
-               BusinessHours = "Mon-Fri: 9AM-7PM, Sat: 9AM-5PM, Sun: Closed",
-               ThemeColor = "#8B5CF6",
-               SecondaryColor = "#F8FAFC",
-               FontFamily = "Inter, -apple-system, BlinkMacSystemFont, sans-serif",
-               CustomCss = @"
-                   .elite-premium { 
-                       background: linear-gradient(135deg, #8B5CF6 0%, #A855F7 50%, #C084FC 100%);
-                       color: white;
-                       border-radius: 12px;
-                       padding: 20px;
-                       box-shadow: 0 20px 40px rgba(139, 92, 246, 0.3);
-                   }
-                   .elite-gold { 
-                       background: linear-gradient(45deg, #F59E0B, #FCD34D);
-                       -webkit-background-clip: text;
-                       -webkit-text-fill-color: transparent;
-                       font-weight: 700;
-                   }
-                   .elite-card {
-                       background: rgba(255, 255, 255, 0.95);
-                       backdrop-filter: blur(10px);
-                       border: 1px solid rgba(139, 92, 246, 0.2);
-                       border-radius: 16px;
-                       box-shadow: 0 8px 32px rgba(139, 92, 246, 0.1);
-                   }
-                   .elite-button {
-                       background: linear-gradient(135deg, #8B5CF6, #A855F7);
-                       border: none;
-                       border-radius: 8px;
-                       color: white;
-                       font-weight: 600;
-                       transition: all 0.3s ease;
-                       box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
-                   }
-                   .elite-button:hover {
-                       transform: translateY(-2px);
-                       box-shadow: 0 8px 25px rgba(139, 92, 246, 0.6);
-                   }
-                   .elite-nav {
-                       background: rgba(255, 255, 255, 0.95);
-                       backdrop-filter: blur(20px);
-                       border-bottom: 1px solid rgba(139, 92, 246, 0.1);
-                   }
-               ",
-               IsActive = true,
-               CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-               UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-           }
+                new BarberShop
+                {
+                    Id = 2,
+                    Name = "Elite Cuts",
+                    Subdomain = "elite",
+                    AdminEmail = "admin@elitecuts.com",
+                    AdminPasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
+                    BusinessPhone = "(555) 123-4567",
+                    BusinessAddress = "456 Oak Street",
+                    BusinessHours = "Mon-Fri: 9AM-7PM, Sat: 9AM-5PM, Sun: Closed",
+                    IsActive = true,
+                    CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                    UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                }
             );
-
             // Seed default services
             modelBuilder.Entity<Service>().HasData(
                 new Service
@@ -233,50 +185,40 @@ namespace BarberShopAPI.Server.Data
                 {
                     Id = 5,
                     TenantId = 2,
-                    Name = "Signature Elite Cut",
-                    Description = "Our signature premium haircut with precision styling and luxury treatment",
-                    Price = 75.00m,
-                    DurationMinutes = 60,
+                    Name = "Premium Haircut",
+                    Description = "Luxury haircut with premium styling",
+                    Price = 45.00m,
+                    DurationMinutes = 75,
                     IsActive = true
                 },
                 new Service
                 {
                     Id = 6,
                     TenantId = 2,
-                    Name = "Royal Beard Sculpting",
-                    Description = "Master-level beard sculpting with premium oils and precision tools",
-                    Price = 65.00m,
-                    DurationMinutes = 45,
+                    Name = "Beard Sculpting",
+                    Description = "Professional beard sculpting and design",
+                    Price = 15.00m,
+                    DurationMinutes = 20,
                     IsActive = true
                 },
                 new Service
                 {
                     Id = 7,
                     TenantId = 2,
-                    Name = "Executive Hair Styling",
-                    Description = "Professional executive styling for business and special occasions",
-                    Price = 45.00m,
-                    DurationMinutes = 30,
+                    Name = "Hair Styling",
+                    Description = "Professional hair styling and finishing",
+                    Price = 10.00m,
+                    DurationMinutes = 15,
                     IsActive = true
                 },
                 new Service
                 {
                     Id = 8,
                     TenantId = 2,
-                    Name = "Luxury Eyebrow Design",
-                    Description = "Artisanal eyebrow shaping with precision and attention to detail",
-                    Price = 35.00m,
-                    DurationMinutes = 25,
-                    IsActive = true
-                },
-                new Service
-                {
-                    Id = 9,
-                    TenantId = 2,
-                    Name = "Complete Gentleman's Package",
-                    Description = "Full service: Haircut, beard sculpting, styling, and eyebrow design",
-                    Price = 150.00m,
-                    DurationMinutes = 90,
+                    Name = "Eyebrow Design",
+                    Description = "Precision eyebrow design and shaping",
+                    Price = 8.00m,
+                    DurationMinutes = 10,
                     IsActive = true
                 }
             );

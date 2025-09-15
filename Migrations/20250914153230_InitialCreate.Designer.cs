@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BarberShopAPI.Server.Migrations
 {
     [DbContext(typeof(BarberShopContext))]
-    [Migration("20250904153428_MultiTenantSupport")]
-    partial class MultiTenantSupport
+    [Migration("20250914153230_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -66,19 +66,6 @@ namespace BarberShopAPI.Server.Migrations
                     b.HasIndex("TenantId");
 
                     b.ToTable("admins", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Email = "admin@thebarberbook.com",
-                            IsActive = true,
-                            Name = "Barber Admin",
-                            PasswordHash = "$2a$11$gHuYzx30Zsk4pty/0YfGXe1JvTk/tnPGRmlenxhSAGwDR4.VVwjwy",
-                            TenantId = 1,
-                            Username = "admin"
-                        });
                 });
 
             modelBuilder.Entity("BarberShopAPI.Server.Models.Appointment", b =>
@@ -175,6 +162,14 @@ namespace BarberShopAPI.Server.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("FontFamily")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("Arial, sans-serif")
+                        .HasColumnName("fontfamily");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
@@ -187,6 +182,14 @@ namespace BarberShopAPI.Server.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("SecondaryColor")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)")
+                        .HasDefaultValue("#000000")
+                        .HasColumnName("secondarycolor");
+
                     b.Property<string>("Subdomain")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -197,7 +200,8 @@ namespace BarberShopAPI.Server.Migrations
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(7)
                         .HasColumnType("character varying(7)")
-                        .HasDefaultValue("#D4AF37");
+                        .HasDefaultValue("#D4AF37")
+                        .HasColumnName("themecolor");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -208,20 +212,6 @@ namespace BarberShopAPI.Server.Migrations
                         .IsUnique();
 
                     b.ToTable("barbershops", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            AdminEmail = "admin@thebarberbook.com",
-                            AdminPasswordHash = "$2a$11$bjVrMiS1DSPN0ADHcJQj3ODqEeKgMrcbYG426GFUUA07ivxSJVnFa",
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsActive = true,
-                            Name = "The Barber Book",
-                            Subdomain = "default",
-                            ThemeColor = "#D4AF37",
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
-                        });
                 });
 
             modelBuilder.Entity("BarberShopAPI.Server.Models.Service", b =>
@@ -259,48 +249,6 @@ namespace BarberShopAPI.Server.Migrations
                     b.HasIndex("TenantId");
 
                     b.ToTable("services", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Description = "Professional haircut with styling",
-                            DurationMinutes = 60,
-                            IsActive = true,
-                            Name = "Classic Haircut",
-                            Price = 25.00m,
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Description = "Creative hair design and styling",
-                            DurationMinutes = 30,
-                            IsActive = true,
-                            Name = "Design",
-                            Price = 10.00m,
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Description = "Professional beard trimming and shaping",
-                            DurationMinutes = 30,
-                            IsActive = true,
-                            Name = "Beard Trimming",
-                            Price = 15.00m,
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Description = "Eyebrow trimming and shaping",
-                            DurationMinutes = 15,
-                            IsActive = true,
-                            Name = "Eyebrows",
-                            Price = 8.00m,
-                            TenantId = 1
-                        });
                 });
 
             modelBuilder.Entity("BarberShopAPI.Server.Models.Admin", b =>

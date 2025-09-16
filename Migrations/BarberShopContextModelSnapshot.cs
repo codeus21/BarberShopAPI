@@ -72,7 +72,7 @@ namespace BarberShopAPI.Server.Migrations
                             Email = "admin@thebarberbook.com",
                             IsActive = true,
                             Name = "Barber Admin",
-                            PasswordHash = "$2a$11$Vo0QxbBc.CRvly5oM2jiQuE.IrDSszxAKTj6uy4LXdj7ZdGD6rpW6",
+                            PasswordHash = "$2a$11$vSii9inmg7FkB4pdRrph9u9GS/9VIvAiysJ1aCrn1aMy1GXusTojy",
                             TenantId = 1,
                             Username = "admin"
                         },
@@ -83,7 +83,7 @@ namespace BarberShopAPI.Server.Migrations
                             Email = "admin@elitecuts.com",
                             IsActive = true,
                             Name = "Elite Cuts Admin",
-                            PasswordHash = "$2a$11$RiVEXpCPVsxHWrsdcK55MOfQf1EVwprH44bQ4Ke/YCZHEzRz/.Ks2",
+                            PasswordHash = "$2a$11$dQItxJzr.kPWZj3fJm8ITOAh/qRSoEPgAsjbvC3ccGofM1yW2JAMO",
                             TenantId = 2,
                             Username = "admin"
                         });
@@ -183,16 +183,13 @@ namespace BarberShopAPI.Server.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("CustomCss")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
                     b.Property<string>("FontFamily")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
-                        .HasDefaultValue("Arial, sans-serif");
+                        .HasDefaultValue("Arial, sans-serif")
+                        .HasColumnName("fontfamily");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -211,7 +208,8 @@ namespace BarberShopAPI.Server.Migrations
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(7)
                         .HasColumnType("character varying(7)")
-                        .HasDefaultValue("#000000");
+                        .HasDefaultValue("#000000")
+                        .HasColumnName("secondarycolor");
 
                     b.Property<string>("Subdomain")
                         .IsRequired()
@@ -223,7 +221,8 @@ namespace BarberShopAPI.Server.Migrations
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(7)
                         .HasColumnType("character varying(7)")
-                        .HasDefaultValue("#D4AF37");
+                        .HasDefaultValue("#D4AF37")
+                        .HasColumnName("themecolor");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -240,7 +239,7 @@ namespace BarberShopAPI.Server.Migrations
                         {
                             Id = 1,
                             AdminEmail = "CleanCuts@thebarberbook.com",
-                            AdminPasswordHash = "$2a$11$bD6t7GoMlV9JL.uRQMrAGehVxbhTgPGTMEhDEO.VQ9.glMrMJOelS",
+                            AdminPasswordHash = "$2a$11$cNXTY1r.MR2oxNC7uf40WOtd8SKtFNdclonZCqPN2n3DzkjwoncQO",
                             BusinessAddress = "123 Main Street",
                             BusinessHours = "Mon-Fri: 9AM-6PM, Sat: 9AM-4PM, Sun: Closed",
                             BusinessPhone = "(123) 456-7890",
@@ -257,17 +256,17 @@ namespace BarberShopAPI.Server.Migrations
                         {
                             Id = 2,
                             AdminEmail = "admin@elitecuts.com",
-                            AdminPasswordHash = "$2a$11$Uz/LB1tXmgTT32OBye1C2.EB.UFqEHUYDCf8VuhrQAJdRb5Vw/r92",
+                            AdminPasswordHash = "$2a$11$7u6..PbuHvPIieEYCnt/dOWhDoVbOCdBC7PUoaZ50ZHi8an68hcsm",
                             BusinessAddress = "456 Oak Street",
                             BusinessHours = "Mon-Fri: 9AM-7PM, Sat: 9AM-5PM, Sun: Closed",
                             BusinessPhone = "(555) 123-4567",
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            FontFamily = "Georgia, serif",
+                            FontFamily = "Arial, sans-serif",
                             IsActive = true,
                             Name = "Elite Cuts",
-                            SecondaryColor = "#FFFFFF",
+                            SecondaryColor = "#000000",
                             Subdomain = "elite",
-                            ThemeColor = "#1E40AF",
+                            ThemeColor = "#D4AF37",
                             UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         });
                 });

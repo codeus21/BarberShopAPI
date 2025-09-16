@@ -34,10 +34,9 @@ namespace BarberShopAPI.Server.Data
                 entity.Property(e => e.BusinessAddress).HasMaxLength(255);
                 entity.Property(e => e.BusinessHours).HasMaxLength(500);
                 entity.Property(e => e.LogoUrl).HasMaxLength(255);
-                entity.Property(e => e.ThemeColor).HasMaxLength(7).HasDefaultValue("#D4AF37");
-                entity.Property(e => e.SecondaryColor).HasMaxLength(7).HasDefaultValue("#000000");
-                entity.Property(e => e.FontFamily).HasMaxLength(50).HasDefaultValue("Arial, sans-serif");
-                entity.Property(e => e.CustomCss).HasMaxLength(1000);
+                entity.Property(e => e.ThemeColor).HasMaxLength(7).HasDefaultValue("#D4AF37").HasColumnName("themecolor");
+                entity.Property(e => e.SecondaryColor).HasMaxLength(7).HasDefaultValue("#000000").HasColumnName("secondarycolor");
+                entity.Property(e => e.FontFamily).HasMaxLength(50).HasDefaultValue("Arial, sans-serif").HasColumnName("fontfamily");
                 
                 entity.HasIndex(e => e.Subdomain).IsUnique();
                 entity.ToTable("barbershops"); // Lowercase for PostgreSQL
@@ -120,9 +119,6 @@ namespace BarberShopAPI.Server.Data
                     BusinessPhone = "(123) 456-7890",
                     BusinessAddress = "123 Main Street",
                     BusinessHours = "Mon-Fri: 9AM-6PM, Sat: 9AM-4PM, Sun: Closed",
-                    ThemeColor = "#D4AF37",
-                    SecondaryColor = "#000000",
-                    FontFamily = "Arial, sans-serif",
                     IsActive = true,
                     CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                     UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
@@ -137,15 +133,11 @@ namespace BarberShopAPI.Server.Data
                     BusinessPhone = "(555) 123-4567",
                     BusinessAddress = "456 Oak Street",
                     BusinessHours = "Mon-Fri: 9AM-7PM, Sat: 9AM-5PM, Sun: Closed",
-                    ThemeColor = "#1E40AF",
-                    SecondaryColor = "#FFFFFF",
-                    FontFamily = "Georgia, serif",
                     IsActive = true,
                     CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                     UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                 }
             );
-
             // Seed default services
             modelBuilder.Entity<Service>().HasData(
                 new Service

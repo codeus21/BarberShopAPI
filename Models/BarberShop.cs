@@ -1,4 +1,3 @@
-// Add this to your Models folder in the C# backend
 using System.ComponentModel.DataAnnotations;
 
 namespace BarberShopAPI.Server.Models
@@ -43,9 +42,6 @@ namespace BarberShopAPI.Server.Models
         
         [MaxLength(50)]
         public string FontFamily { get; set; } = "Arial, sans-serif";
-        
-        [MaxLength(1000)]
-        public string? CustomCss { get; set; }
         
         public bool IsActive { get; set; } = true;
         

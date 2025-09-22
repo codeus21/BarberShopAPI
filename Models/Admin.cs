@@ -24,6 +24,10 @@ namespace BarberShopAPI.Server.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        public DateTime? UpdatedAt { get; set; }
+
+        public bool HasCustomPassword { get; set; } = false;
+
         // Multi-tenant support
         public int TenantId { get; set; }
 

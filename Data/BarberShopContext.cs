@@ -88,9 +88,11 @@ namespace BarberShopAPI.Server.Data
             modelBuilder.Entity<Admin>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.Username).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Username).IsRequired().HasMaxLength(100);
                 entity.Property(e => e.PasswordHash).IsRequired().HasMaxLength(255);
-                entity.Property(e => e.Email).HasMaxLength(100);
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Email).HasMaxLength(200);
+                entity.Property(e => e.HasCustomPassword).HasDefaultValue(false);
                 
                 // Tenant relationship
                 entity.HasOne(e => e.Tenant)
@@ -234,6 +236,7 @@ namespace BarberShopAPI.Server.Data
                     Name = "Barber Admin",
                     Email = "admin@thebarberbook.com",
                     IsActive = true,
+                    HasCustomPassword = false, // Default tenant keeps simple credentials
                     CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                 },
                 new Admin
@@ -245,6 +248,7 @@ namespace BarberShopAPI.Server.Data
                     Name = "Elite Cuts Admin",
                     Email = "admin@elitecuts.com",
                     IsActive = true,
+                    HasCustomPassword = false, // Will be set to true when they create custom password
                     CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                 }
             );

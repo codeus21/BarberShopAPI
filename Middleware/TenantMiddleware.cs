@@ -50,6 +50,7 @@ namespace BarberShopAPI.Server.Middleware
                 context.Items["TenantId"] = tenant.Id;
                 context.Items["Tenant"] = tenant;
                 context.Items["TenantSubdomain"] = tenant.Subdomain;
+                context.Items["TenantName"] = tenant.Name;
             }
             catch (Exception ex)
             {

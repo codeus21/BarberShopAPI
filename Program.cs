@@ -63,6 +63,10 @@ builder.Services.AddScoped<ServiceRepository>();
 builder.Services.AddScoped<AppointmentRepository>();
 builder.Services.AddScoped<AdminRepository>();
 
+// Add password services
+builder.Services.AddScoped<PasswordPolicyService>();
+builder.Services.AddScoped<PasswordStrengthService>();
+
 // Add Background Service for appointment cleanup
 builder.Services.AddHostedService<AppointmentCleanupService>();
 

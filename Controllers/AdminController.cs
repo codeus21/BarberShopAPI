@@ -6,7 +6,7 @@ using BarberShopAPI.Server.Models;
 using BarberShopAPI.Server.Helpers;
 using BarberShopAPI.Server.Attributes;
 
-namespace BarberShopAPI.Controllers
+namespace BarberShopAPI.Server.Controllers
 {
     [Authorize(Roles = "Admin")]
     [TenantAuthorize]

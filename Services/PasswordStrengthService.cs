@@ -61,10 +61,9 @@ namespace BarberShopAPI.Server.Services
             // Determine strength level
             return score switch
             {
-                <= 2 => PasswordStrengthLevel.VeryWeak,
-                <= 4 => PasswordStrengthLevel.Weak,
-                <= 6 => PasswordStrengthLevel.Fair,
-                <= 8 => PasswordStrengthLevel.Good,
+                <= 1 => PasswordStrengthLevel.VeryWeak,
+                <= 2 => PasswordStrengthLevel.Weak,
+                <= 3 => PasswordStrengthLevel.Good,
                 _ => PasswordStrengthLevel.Strong
             };
         }
@@ -75,7 +74,6 @@ namespace BarberShopAPI.Server.Services
             {
                 PasswordStrengthLevel.VeryWeak => "Very Weak - Easily guessable",
                 PasswordStrengthLevel.Weak => "Weak - Vulnerable to attacks",
-                PasswordStrengthLevel.Fair => "Fair - Somewhat secure",
                 PasswordStrengthLevel.Good => "Good - Reasonably secure",
                 PasswordStrengthLevel.Strong => "Strong - Very secure",
                 _ => "Unknown"
@@ -88,7 +86,6 @@ namespace BarberShopAPI.Server.Services
             {
                 PasswordStrengthLevel.VeryWeak => "#ff4444",
                 PasswordStrengthLevel.Weak => "#ff8800",
-                PasswordStrengthLevel.Fair => "#ffbb00",
                 PasswordStrengthLevel.Good => "#88cc00",
                 PasswordStrengthLevel.Strong => "#00aa00",
                 _ => "#666666"

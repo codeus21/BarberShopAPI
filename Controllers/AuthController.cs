@@ -113,7 +113,7 @@ namespace BarberShopAPI.Server.Controllers
             var existingAdmin = await _context.Admins.FirstOrDefaultAsync(a => a.Username == "admin");
             if (existingAdmin != null)
             {
-                return BadRequest("Admin user already exists");
+                return BadRequest(new { message = "Admin user already exists" });
             }
 
             // Create admin user
@@ -154,7 +154,7 @@ namespace BarberShopAPI.Server.Controllers
         {
             if (length < 8 || length > 128)
             {
-                return BadRequest("Password length must be between 8 and 128 characters.");
+                return BadRequest(new { message = "Password length must be between 8 and 128 characters." });
             }
 
             var password = _passwordPolicyService.GenerateSecurePassword(length);
@@ -184,7 +184,7 @@ namespace BarberShopAPI.Server.Controllers
             // Verify current password
             if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, admin.PasswordHash))
             {
-                return BadRequest("Current password is incorrect");
+                return BadRequest(new { message = "Current password is incorrect" });
             }
 
             // Validate new password
@@ -296,7 +296,7 @@ namespace BarberShopAPI.Server.Controllers
 
             if (isDefaultTenant)
             {
-                return BadRequest("Password setup not allowed for default tenant");
+                return BadRequest(new { message = "Password setup not allowed for default tenant" });
             }
 
             var admin = await _context.Admins
@@ -309,7 +309,7 @@ namespace BarberShopAPI.Server.Controllers
 
             if (admin.HasCustomPassword)
             {
-                return BadRequest("Password has already been set. Use password recovery if needed.");
+                return BadRequest(new { message = "Password has already been set. Use password recovery if needed." });
             }
 
             // Validate password
@@ -338,7 +338,7 @@ namespace BarberShopAPI.Server.Controllers
 
             if (isDefaultTenant)
             {
-                return BadRequest("Password recovery not available for default tenant");
+                return BadRequest(new { message = "Password recovery not available for default tenant" });
             }
 
             var admin = await _context.Admins

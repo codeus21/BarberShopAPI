@@ -40,6 +40,13 @@ namespace BarberShopAPI.Server.Services
                 result.Errors.Add($"Password must be at least {_policy.MinLength} characters long.");
             }
 
+            // Check for spaces
+            if (password.Contains(' '))
+            {
+                result.IsValid = false;
+                result.Errors.Add("Password cannot contain spaces.");
+            }
+
             // Check maximum length
             if (password.Length > _policy.MaxLength)
             {

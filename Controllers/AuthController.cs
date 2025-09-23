@@ -416,18 +416,17 @@ namespace BarberShopAPI.Server.Controllers
             await _context.SaveChangesAsync();
 
             // Mark token as used
-            // TODO: Uncomment after table is created
-            // var tokenHash = BCrypt.Net.BCrypt.HashPassword(request.Token);
-            // var usedToken = new UsedPasswordResetToken
-            // {
-            //     TokenHash = tokenHash,
-            //     AdminId = adminId.Value, // adminId is guaranteed to be non-null here
-            //     TenantId = tenantId,
-            //     UsedAt = DateTime.UtcNow
-            // };
+            var tokenHash = BCrypt.Net.BCrypt.HashPassword(request.Token);
+            var usedToken = new UsedPasswordResetToken
+            {
+                TokenHash = tokenHash,
+                AdminId = adminId.Value, // adminId is guaranteed to be non-null here
+                TenantId = tenantId,
+                UsedAt = DateTime.UtcNow
+            };
 
-            // _context.UsedPasswordResetTokens.Add(usedToken);
-            // await _context.SaveChangesAsync();
+            _context.UsedPasswordResetTokens.Add(usedToken);
+            await _context.SaveChangesAsync();
 
             return Ok(new { message = "Password reset successfully" });
         }
@@ -511,21 +510,20 @@ namespace BarberShopAPI.Server.Controllers
                 }
 
                 // Check if this specific token has already been used
-                // TODO: Uncomment after table is created
-                // var usedTokens = await _context.UsedPasswordResetTokens
-                //     .Where(t => t.AdminId == adminId && t.TenantId == tenantId)
-                //     .ToListAsync();
+                var usedTokens = await _context.UsedPasswordResetTokens
+                    .Where(t => t.AdminId == adminId && t.TenantId == tenantId)
+                    .ToListAsync();
 
-                // Console.WriteLine($"ValidatePasswordResetTokenAsync - Found {usedTokens.Count} used tokens for admin {adminId}");
+                Console.WriteLine($"ValidatePasswordResetTokenAsync - Found {usedTokens.Count} used tokens for admin {adminId}");
 
-                // foreach (var usedToken in usedTokens)
-                // {
-                //     if (BCrypt.Net.BCrypt.Verify(token, usedToken.TokenHash))
-                //     {
-                //         Console.WriteLine("ValidatePasswordResetTokenAsync - Token already used");
-                //         return null; // This specific token already used
-                //     }
-                // }
+                foreach (var usedToken in usedTokens)
+                {
+                    if (BCrypt.Net.BCrypt.Verify(token, usedToken.TokenHash))
+                    {
+                        Console.WriteLine("ValidatePasswordResetTokenAsync - Token already used");
+                        return null; // This specific token already used
+                    }
+                }
 
                 Console.WriteLine("ValidatePasswordResetTokenAsync - Token is valid and not used");
                 return adminId;

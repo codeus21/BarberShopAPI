@@ -43,14 +43,8 @@ namespace BarberShopAPI.Server.Services
                 client.Credentials = new NetworkCredential(smtpUsername, smtpPassword);
                 client.EnableSsl = true;
 
-                Console.WriteLine($"EmailService - Subdomain: {subdomain}");
-                Console.WriteLine($"EmailService - TenantName: {tenantName}");
-                
                 var tenantParam = subdomain ?? tenantName.ToLower().Replace(" ", "-");
-                Console.WriteLine($"EmailService - Final tenant param: {tenantParam}");
-                
                 var resetUrl = $"{_configuration["App:BaseUrl"]}/admin/reset-password?token={resetToken}&tenant={tenantParam}";
-                Console.WriteLine($"EmailService - Reset URL: {resetUrl}");
 
                 var mailMessage = new MailMessage
                 {

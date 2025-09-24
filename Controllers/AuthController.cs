@@ -350,8 +350,18 @@ namespace BarberShopAPI.Server.Controllers
                 return Ok(new { message = "If the email exists, a recovery link has been sent" });
             }
 
-            // TODO: Implement email sending for password recovery
-            // For now, just return success
+            // Generate JWT reset token with short expiration
+            var resetToken = GeneratePasswordResetJwtToken(admin, tenantId);
+
+            // Send email
+            var emailSent = await _emailService.SendPasswordRecoveryEmailAsync(
+                admin.Email!, 
+                tenantName ?? "Your Barber Shop", 
+                resetToken,
+                admin.Tenant?.Subdomain
+            );
+
+            // Always return success message for security (don't reveal if email was sent)
             return Ok(new { message = "If the email exists, a recovery link has been sent" });
         }
 
@@ -398,19 +408,20 @@ namespace BarberShopAPI.Server.Controllers
             // Save password changes to database
             await _context.SaveChangesAsync();
 
-            // Mark token as used
-            var tokenHash = BCrypt.Net.BCrypt.HashPassword(request.Token);
-            var usedToken = new UsedPasswordResetToken
+            // Mark token as used ONLY after successful password change
+            using (var sha256 = System.Security.Cryptography.SHA256.Create())
             {
-                TokenHash = tokenHash,
-                AdminId = adminId.Value, // adminId is guaranteed to be non-null here
-                TenantId = tenantId,
-                UsedAt = DateTime.UtcNow
-            };
-
-            _context.UsedPasswordResetTokens.Add(usedToken);
-            await _context.SaveChangesAsync();
-
+                var tokenHash = Convert.ToBase64String(sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(request.Token)));
+                var usedToken = new UsedPasswordResetToken
+                {
+                    TokenHash = tokenHash,
+                    AdminId = adminId.Value,
+                    TenantId = tenantId,
+                    UsedAt = DateTime.UtcNow
+                };
+                _context.UsedPasswordResetTokens.Add(usedToken);
+                await _context.SaveChangesAsync();
+            }
             return Ok(new { message = "Password reset successfully" });
         }
 
@@ -445,9 +456,6 @@ namespace BarberShopAPI.Server.Controllers
         {
             try
             {
-                Console.WriteLine($"ValidatePasswordResetTokenAsync - Token: {token.Substring(0, Math.Min(50, token.Length))}...");
-                Console.WriteLine($"ValidatePasswordResetTokenAsync - TenantId: {tenantId}");
-                
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? "your-secret-key-here");
 
@@ -467,28 +475,22 @@ namespace BarberShopAPI.Server.Controllers
                 
                 // Check if this is a password reset token
                 var tokenType = principal.FindFirst("TokenType")?.Value;
-                Console.WriteLine($"ValidatePasswordResetTokenAsync - TokenType: {tokenType}");
                 if (tokenType != "PasswordReset")
                 {
-                    Console.WriteLine("ValidatePasswordResetTokenAsync - Invalid token type");
                     return null;
                 }
 
                 // Check tenant ID
                 var tokenTenantId = principal.FindFirst("TenantId")?.Value;
-                Console.WriteLine($"ValidatePasswordResetTokenAsync - TokenTenantId: {tokenTenantId}");
                 if (!int.TryParse(tokenTenantId, out var parsedTenantId) || parsedTenantId != tenantId)
                 {
-                    Console.WriteLine("ValidatePasswordResetTokenAsync - Tenant ID mismatch");
                     return null;
                 }
 
                 // Get admin ID
                 var adminIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                Console.WriteLine($"ValidatePasswordResetTokenAsync - AdminId: {adminIdClaim}");
                 if (!int.TryParse(adminIdClaim, out var adminId))
                 {
-                    Console.WriteLine("ValidatePasswordResetTokenAsync - Invalid admin ID");
                     return null;
                 }
 
@@ -497,23 +499,23 @@ namespace BarberShopAPI.Server.Controllers
                     .Where(t => t.AdminId == adminId && t.TenantId == tenantId)
                     .ToListAsync();
 
-                Console.WriteLine($"ValidatePasswordResetTokenAsync - Found {usedTokens.Count} used tokens for admin {adminId}");
-
                 foreach (var usedToken in usedTokens)
                 {
-                    if (BCrypt.Net.BCrypt.Verify(token, usedToken.TokenHash))
+                    // Use SHA256 hash for consistent token comparison
+                    using (var sha256 = System.Security.Cryptography.SHA256.Create())
                     {
-                        Console.WriteLine("ValidatePasswordResetTokenAsync - Token already used");
-                        return null; // This specific token already used
+                        var currentTokenHash = Convert.ToBase64String(sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(token)));
+                        if (currentTokenHash == usedToken.TokenHash)
+                        {
+                            return null; // This specific token already used
+                        }
                     }
                 }
 
-                Console.WriteLine("ValidatePasswordResetTokenAsync - Token is valid and not used");
                 return adminId;
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine($"ValidatePasswordResetTokenAsync - Exception: {ex.Message}");
                 return null;
             }
         }

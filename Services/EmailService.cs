@@ -1,9 +1,5 @@
 using System.Net;
 using System.Net.Mail;
-using SendGrid;
-using SendGrid.Helpers.Mail;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 
 namespace BarberShopAPI.Server.Services
 {
@@ -27,49 +23,47 @@ namespace BarberShopAPI.Server.Services
         {
             try
             {
-                var sendGridApiKey = _configuration["Email:SendGridApiKey"];
+                // For development/testing, we'll use a simple SMTP configuration
+                // In production, you'd want to use a service like SendGrid, AWS SES, etc.
+                
+                var smtpHost = _configuration["Email:SmtpHost"] ?? "smtp.gmail.com";
+                var smtpPort = int.Parse(_configuration["Email:SmtpPort"] ?? "587");
+                var smtpUsername = _configuration["Email:SmtpUsername"];
+                var smtpPassword = _configuration["Email:SmtpPassword"];
                 var fromEmail = _configuration["Email:FromEmail"] ?? "noreply@thebarberbook.com";
                 var fromName = _configuration["Email:FromName"] ?? "The Barber Book";
 
-                if (string.IsNullOrEmpty(sendGridApiKey))
+                if (string.IsNullOrEmpty(smtpUsername) || string.IsNullOrEmpty(smtpPassword))
                 {
-                    _logger.LogWarning("SendGrid API key is missing. Password recovery email not sent.");
+                    _logger.LogWarning("Email configuration is missing. Password recovery email not sent.");
                     return false;
                 }
 
-                var client = new SendGridClient(sendGridApiKey);
-                
+                using var client = new SmtpClient(smtpHost, smtpPort);
+                client.Credentials = new NetworkCredential(smtpUsername, smtpPassword);
+                client.EnableSsl = true;
+
                 var tenantParam = subdomain ?? tenantName.ToLower().Replace(" ", "-");
                 var resetUrl = $"{_configuration["App:BaseUrl"]}/admin/reset-password?token={resetToken}&tenant={tenantParam}";
 
-                var htmlContent = CreatePasswordRecoveryEmailBody(tenantName, resetUrl);
-
-                var msg = new SendGridMessage()
+                var mailMessage = new MailMessage
                 {
-                    From = new EmailAddress(fromEmail, fromName),
+                    From = new MailAddress(fromEmail, fromName),
                     Subject = $"Password Recovery - {tenantName}",
-                    HtmlContent = htmlContent
+                    Body = CreatePasswordRecoveryEmailBody(tenantName, resetUrl),
+                    IsBodyHtml = true
                 };
-                
-                msg.AddTo(new EmailAddress(toEmail));
 
-                var response = await client.SendEmailAsync(msg);
+                mailMessage.To.Add(toEmail);
+
+                await client.SendMailAsync(mailMessage);
                 
-                if (response.IsSuccessStatusCode)
-                {
-                    _logger.LogInformation("Password recovery email sent to {ToEmail} for tenant {TenantName}", toEmail, tenantName);
-                    return true;
-                }
-                else
-                {
-                    var responseBody = await response.Body.ReadAsStringAsync();
-                    _logger.LogError("SendGrid failed to send email. Status: {StatusCode}, Response: {ResponseBody}", response.StatusCode, responseBody);
-                    return false;
-                }
+                _logger.LogInformation($"Password recovery email sent to {toEmail} for tenant {tenantName}");
+                return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to send password recovery email to {ToEmail} for tenant {TenantName}", toEmail, tenantName);
+                _logger.LogError(ex, $"Failed to send password recovery email to {toEmail}");
                 return false;
             }
         }

@@ -20,14 +20,17 @@ namespace BarberShopAPI.Server.Controllers
         private readonly IConfiguration _configuration;
         private readonly PasswordPolicyService _passwordPolicyService;
         private readonly PasswordStrengthService _passwordStrengthService;
+        private readonly IEmailService _emailService;
 
         public AuthController(BarberShopContext context, IConfiguration configuration, 
-            PasswordPolicyService passwordPolicyService, PasswordStrengthService passwordStrengthService)
+            PasswordPolicyService passwordPolicyService, PasswordStrengthService passwordStrengthService,
+            IEmailService emailService)
         {
             _context = context;
             _configuration = configuration;
             _passwordPolicyService = passwordPolicyService;
             _passwordStrengthService = passwordStrengthService;
+            _emailService = emailService;
         }
 
         [HttpPost("login")]
@@ -342,6 +345,7 @@ namespace BarberShopAPI.Server.Controllers
             }
 
             var admin = await _context.Admins
+                .Include(a => a.Tenant)
                 .FirstOrDefaultAsync(a => a.TenantId == tenantId && a.IsActive && a.Email == request.Email);
 
             if (admin == null)

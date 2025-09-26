@@ -67,6 +67,9 @@ builder.Services.AddScoped<AdminRepository>();
 builder.Services.AddScoped<PasswordPolicyService>();
 builder.Services.AddScoped<PasswordStrengthService>();
 
+// Add email service
+builder.Services.AddScoped<IEmailService, EmailService>();
+
 // Add Background Service for appointment cleanup
 builder.Services.AddHostedService<AppointmentCleanupService>();
 
@@ -99,7 +102,8 @@ builder.Services.AddCors(options =>
             "http://192.168.1.99:5173",  // Keep for local network testing
             "https://localhost:5173",  // HTTPS local development
             "http://127.0.0.1:5173",   // Alternative localhost
-            "https://127.0.0.1:5173"   // Alternative localhost HTTPS
+            "https://127.0.0.1:5173",   // Alternative localhost HTTPS
+            "https://localhost:7074"   // Backend HTTPS for testing
         )
         .AllowAnyHeader()
         .AllowAnyMethod();
@@ -121,11 +125,13 @@ if (!app.Environment.IsDevelopment())
 app.UseSwagger();
 app.UseSwaggerUI();
 
+// IMPORTANT: Add CORS before other middleware
+app.UseCors("AllowReactApp");
+
 // IMPORTANT: Add tenant middleware BEFORE other middleware
 app.UseTenantMiddleware();
 
 app.UseHttpsRedirection();
-app.UseCors("AllowReactApp");
 app.UseAuthentication();
 app.UseAuthorization();
 

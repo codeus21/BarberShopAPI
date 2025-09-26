@@ -10,11 +10,13 @@ namespace BarberShopAPI.Server.Controllers
     {
         private readonly AppointmentRepository _appointmentRepository;
         private readonly ServiceRepository _serviceRepository;
+        private readonly AvailabilityScheduleRepository _availabilityRepository;
 
-        public AppointmentsController(AppointmentRepository appointmentRepository, ServiceRepository serviceRepository)
+        public AppointmentsController(AppointmentRepository appointmentRepository, ServiceRepository serviceRepository, AvailabilityScheduleRepository availabilityRepository)
         {
             _appointmentRepository = appointmentRepository;
             _serviceRepository = serviceRepository;
+            _availabilityRepository = availabilityRepository;
         }
 
         // GET: api/Appointments
@@ -48,12 +50,22 @@ namespace BarberShopAPI.Server.Controllers
                 return BadRequest("Invalid time format. Please use HH:MM:SS format.");
             }
 
-            // Check if the time slot is available
-            var isAvailable = await _appointmentRepository.IsTimeSlotAvailableAsync(
+            // Check if the time slot is available in the schedule
+            var isInSchedule = await _availabilityRepository.IsTimeSlotAvailableAsync(
                 request.AppointmentDate, 
                 appointmentTime);
 
-            if (!isAvailable)
+            if (!isInSchedule)
+            {
+                return BadRequest("This time slot is not available in your schedule.");
+            }
+
+            // Check if the time slot is already booked
+            var isBooked = await _appointmentRepository.IsTimeSlotAvailableAsync(
+                request.AppointmentDate, 
+                appointmentTime);
+
+            if (!isBooked)
             {
                 return BadRequest("This time slot is already booked.");
             }
@@ -88,12 +100,13 @@ namespace BarberShopAPI.Server.Controllers
         [HttpGet("available-slots/{date}")]
         public async Task<ActionResult<IEnumerable<string>>> GetAvailableSlots(DateTime date)
         {
-            // Define business hours (8 AM to 8 PM, Monday-Friday)
-            var timeSlots = new List<string>
+            // Get available time slots from the availability schedule
+            var availableTimeSlots = await _availabilityRepository.GetAvailableTimeSlotsAsync(date);
+            
+            if (!availableTimeSlots.Any())
             {
-            "08:00:00", "09:00:00", "10:00:00", "11:00:00", "12:00:00",
-            "13:00:00", "14:00:00", "15:00:00", "16:00:00", "17:00:00", "18:00:00", "19:00:00"
-            };
+                return Ok(new List<string>()); // No availability set for this day
+            }
 
             // Get appointments for the date
             var appointments = await _appointmentRepository.GetAppointmentsByDateAsync(date);
@@ -102,8 +115,8 @@ namespace BarberShopAPI.Server.Controllers
                 .Select(a => a.AppointmentTime.ToString(@"hh\:mm\:ss"))
                 .ToList();
 
-            // Return available slots
-            var availableSlots = timeSlots.Where(slot => !bookedSlots.Contains(slot)).ToList();
+            // Return available slots that are not booked
+            var availableSlots = availableTimeSlots.Where(slot => !bookedSlots.Contains(slot)).ToList();
 
             return availableSlots;
         }

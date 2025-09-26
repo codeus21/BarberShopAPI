@@ -136,4 +136,65 @@ namespace BarberShopAPI.Server.Repositories
                 .FirstOrDefaultAsync(a => a.Username.ToLower() == username.ToLower());
         }
     }
+
+    public class AvailabilityScheduleRepository : BaseRepository<AvailabilitySchedule>
+    {
+        public AvailabilityScheduleRepository(BarberShopContext context, IHttpContextAccessor httpContextAccessor) 
+            : base(context, httpContextAccessor) { }
+
+        public async Task<List<AvailabilitySchedule>> GetByDayOfWeekAsync(string dayOfWeek)
+        {
+            return await GetTenantQuery()
+                .Where(a => a.DayOfWeek == dayOfWeek && a.IsAvailable)
+                .OrderBy(a => a.StartTime)
+                .ToListAsync();
+        }
+
+        public async Task<List<AvailabilitySchedule>> GetAllSchedulesAsync()
+        {
+            return await GetTenantQuery()
+                .OrderBy(a => a.DayOfWeek)
+                .ThenBy(a => a.StartTime)
+                .ToListAsync();
+        }
+
+        public async Task<AvailabilitySchedule?> GetByDayAndTimeAsync(string dayOfWeek, TimeSpan startTime)
+        {
+            return await GetTenantQuery()
+                .FirstOrDefaultAsync(a => a.DayOfWeek == dayOfWeek && a.StartTime == startTime);
+        }
+
+        public async Task<bool> IsTimeSlotAvailableAsync(DateTime date, TimeSpan time)
+        {
+            var dayOfWeek = date.DayOfWeek.ToString();
+            return await GetTenantQuery()
+                .AnyAsync(a => a.DayOfWeek == dayOfWeek && 
+                              a.IsAvailable &&
+                              time >= a.StartTime && 
+                              time < a.EndTime);
+        }
+
+        public async Task<List<string>> GetAvailableTimeSlotsAsync(DateTime date)
+        {
+            var dayOfWeek = date.DayOfWeek.ToString();
+            var schedules = await GetTenantQuery()
+                .Where(a => a.DayOfWeek == dayOfWeek && a.IsAvailable)
+                .OrderBy(a => a.StartTime)
+                .ToListAsync();
+
+            var timeSlots = new List<string>();
+            
+            foreach (var schedule in schedules)
+            {
+                var currentTime = schedule.StartTime;
+                while (currentTime < schedule.EndTime)
+                {
+                    timeSlots.Add(currentTime.ToString(@"hh\:mm\:ss"));
+                    currentTime = currentTime.Add(TimeSpan.FromHours(1)); // 1-hour slots
+                }
+            }
+
+            return timeSlots;
+        }
+    }
 }

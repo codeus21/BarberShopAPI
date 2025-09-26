@@ -53,6 +53,7 @@ namespace BarberShopAPI.Server.Models
         public virtual ICollection<Service> Services { get; set; } = new List<Service>();
         public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
         public virtual ICollection<Admin> Admins { get; set; } = new List<Admin>();
+        public virtual ICollection<AvailabilitySchedule> AvailabilitySchedules { get; set; } = new List<AvailabilitySchedule>();
     }
     
     // Interface for tenant entities

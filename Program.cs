@@ -62,6 +62,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ServiceRepository>();
 builder.Services.AddScoped<AppointmentRepository>();
 builder.Services.AddScoped<AdminRepository>();
+builder.Services.AddScoped<AvailabilityScheduleRepository>();
 
 // Add password services
 builder.Services.AddScoped<PasswordPolicyService>();

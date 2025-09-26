@@ -7,9 +7,10 @@ using System.Text;
 using BarberShopAPI.Server.Data;
 using BarberShopAPI.Server.Models;
 using BarberShopAPI.Server.Helpers;
+using BarberShopAPI.Server.Services;
 using BCrypt.Net;
 
-namespace BarberShopAPI.Controllers
+namespace BarberShopAPI.Server.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
@@ -17,17 +18,27 @@ namespace BarberShopAPI.Controllers
     {
         private readonly BarberShopContext _context;
         private readonly IConfiguration _configuration;
+        private readonly PasswordPolicyService _passwordPolicyService;
+        private readonly PasswordStrengthService _passwordStrengthService;
+        private readonly IEmailService _emailService;
 
-        public AuthController(BarberShopContext context, IConfiguration configuration)
+        public AuthController(BarberShopContext context, IConfiguration configuration, 
+            PasswordPolicyService passwordPolicyService, PasswordStrengthService passwordStrengthService,
+            IEmailService emailService)
         {
             _context = context;
             _configuration = configuration;
+            _passwordPolicyService = passwordPolicyService;
+            _passwordStrengthService = passwordStrengthService;
+            _emailService = emailService;
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult<LoginResponse>> Login(LoginRequest request)
+        public async Task<ActionResult<TenantLoginResponse>> Login(TenantLoginRequest request)
         {
             var tenantId = TenantHelper.GetCurrentTenantId(HttpContext);
+            var tenantName = TenantHelper.GetCurrentTenantName(HttpContext);
+            var isDefaultTenant = tenantName?.ToLower() == "default" || tenantName?.ToLower() == "clean cuts";
             
             var admin = await _context.Admins
                 .Include(a => a.Tenant)
@@ -35,18 +46,41 @@ namespace BarberShopAPI.Controllers
                                         a.TenantId == tenantId && 
                                         a.IsActive);
 
-            if (admin == null || !BCrypt.Net.BCrypt.Verify(request.Password, admin.PasswordHash))
+            if (admin == null)
             {
                 return Unauthorized("Invalid username or password");
             }
 
-            var token = GenerateJwtToken(admin);
-
-            return new LoginResponse
+            // For default tenant, allow default credentials
+            if (isDefaultTenant && request.Username.ToLower() == "admin" && request.Password == "admin123")
             {
-                Token = token,
+                var token = GenerateJwtToken(admin);
+                return new TenantLoginResponse
+                {
+                    Token = token,
+                    Username = admin.Username,
+                    Name = admin.Name,
+                    RequiresPasswordSetup = false,
+                    TenantName = tenantName ?? "Clean Cuts",
+                    IsDefaultTenant = true
+                };
+            }
+
+            // For all other cases, verify password hash
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, admin.PasswordHash))
+            {
+                return Unauthorized("Invalid username or password");
+            }
+
+            var jwtToken = GenerateJwtToken(admin);
+            return new TenantLoginResponse
+            {
+                Token = jwtToken,
                 Username = admin.Username,
-                Name = admin.Name
+                Name = admin.Name,
+                RequiresPasswordSetup = !admin.HasCustomPassword && !isDefaultTenant,
+                TenantName = tenantName ?? "Unknown",
+                IsDefaultTenant = isDefaultTenant
             };
         }
 
@@ -82,7 +116,7 @@ namespace BarberShopAPI.Controllers
             var existingAdmin = await _context.Admins.FirstOrDefaultAsync(a => a.Username == "admin");
             if (existingAdmin != null)
             {
-                return BadRequest("Admin user already exists");
+                return BadRequest(new { message = "Admin user already exists" });
             }
 
             // Create admin user
@@ -100,6 +134,394 @@ namespace BarberShopAPI.Controllers
             await _context.SaveChangesAsync();
 
             return Ok("Admin user created successfully");
+        }
+
+        [HttpPost("validate-password")]
+        public ActionResult<PasswordValidationResponse> ValidatePassword([FromBody] string password)
+        {
+            var validationResult = _passwordPolicyService.ValidatePassword(password);
+            var strength = _passwordStrengthService.CalculateStrength(password);
+
+            return new PasswordValidationResponse
+            {
+                IsValid = validationResult.IsValid,
+                Errors = validationResult.Errors,
+                Strength = (PasswordStrengthLevel)strength,
+                StrengthDescription = _passwordStrengthService.GetStrengthDescription(strength),
+                StrengthColor = _passwordStrengthService.GetStrengthColor(strength)
+            };
+        }
+
+        [HttpPost("generate-password")]
+        public ActionResult<string> GeneratePassword([FromQuery] int length = 12)
+        {
+            if (length < 8 || length > 128)
+            {
+                return BadRequest(new { message = "Password length must be between 8 and 128 characters." });
+            }
+
+            var password = _passwordPolicyService.GenerateSecurePassword(length);
+            return Ok(password);
+        }
+
+        [HttpPost("change-password")]
+        [Microsoft.AspNetCore.Authorization.Authorize]
+        public async Task<ActionResult> ChangePassword(ChangePasswordRequest request)
+        {
+            var tenantId = TenantHelper.GetCurrentTenantId(HttpContext);
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId) || !int.TryParse(userId, out var adminId))
+            {
+                return Unauthorized("Invalid user context");
+            }
+
+            var admin = await _context.Admins
+                .FirstOrDefaultAsync(a => a.Id == adminId && a.TenantId == tenantId && a.IsActive);
+
+            if (admin == null)
+            {
+                return NotFound("Admin user not found");
+            }
+
+            // Verify current password
+            if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, admin.PasswordHash))
+            {
+                return BadRequest(new { message = "Current password is incorrect" });
+            }
+
+            // Validate new password
+            var validationResult = _passwordPolicyService.ValidatePassword(request.NewPassword);
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(new { message = "Password validation failed", errors = validationResult.Errors });
+            }
+
+            // Update password
+            admin.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            admin.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Password changed successfully" });
+        }
+
+        [HttpPost("create-password")]
+        [Microsoft.AspNetCore.Authorization.Authorize]
+        public async Task<ActionResult> CreatePassword(CreatePasswordRequest request)
+        {
+            var tenantId = TenantHelper.GetCurrentTenantId(HttpContext);
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId) || !int.TryParse(userId, out var adminId))
+            {
+                return Unauthorized("Invalid user context");
+            }
+
+            var admin = await _context.Admins
+                .FirstOrDefaultAsync(a => a.Id == adminId && a.TenantId == tenantId && a.IsActive);
+
+            if (admin == null)
+            {
+                return NotFound("Admin user not found");
+            }
+
+            // Validate password
+            var validationResult = _passwordPolicyService.ValidatePassword(request.Password);
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(new { message = "Password validation failed", errors = validationResult.Errors });
+            }
+
+            // Update password
+            admin.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+            admin.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Password created successfully" });
+        }
+
+        [HttpGet("password-requirements")]
+        public ActionResult GetPasswordRequirements()
+        {
+            return Ok(new
+            {
+                minLength = 8,
+                maxLength = 128,
+                requireUppercase = true,
+                requireLowercase = true,
+                requireDigit = true,
+                requireSpecialChar = true,
+                minSpecialChars = 1,
+                maxConsecutiveChars = 3,
+                forbiddenPatterns = new[] { "password", "123456", "admin", "qwerty" }
+            });
+        }
+
+        [HttpGet("auth-status")]
+        public async Task<ActionResult<TenantAuthStatus>> GetAuthStatus()
+        {
+            var tenantId = TenantHelper.GetCurrentTenantId(HttpContext);
+            var tenantName = TenantHelper.GetCurrentTenantName(HttpContext);
+            var isDefaultTenant = tenantName?.ToLower() == "default" || tenantName?.ToLower() == "clean cuts";
+
+            var admin = await _context.Admins
+                .FirstOrDefaultAsync(a => a.TenantId == tenantId && a.IsActive);
+
+            if (admin == null)
+            {
+                return Ok(new TenantAuthStatus
+                {
+                    RequiresPasswordSetup = !isDefaultTenant,
+                    IsDefaultTenant = isDefaultTenant,
+                    TenantName = tenantName ?? "Unknown",
+                    Message = isDefaultTenant ? "Use default credentials: admin/admin123" : "Admin account not found"
+                });
+            }
+
+            return Ok(new TenantAuthStatus
+            {
+                RequiresPasswordSetup = !admin.HasCustomPassword && !isDefaultTenant,
+                IsDefaultTenant = isDefaultTenant,
+                TenantName = tenantName ?? "Unknown",
+                Message = isDefaultTenant ? "Use default credentials: admin/admin123" : 
+                          admin.HasCustomPassword ? "Password already set" : "Password setup required"
+            });
+        }
+
+        [HttpPost("setup-password")]
+        public async Task<ActionResult> SetupPassword(SetupPasswordRequest request)
+        {
+            var tenantId = TenantHelper.GetCurrentTenantId(HttpContext);
+            var tenantName = TenantHelper.GetCurrentTenantName(HttpContext);
+            var isDefaultTenant = tenantName?.ToLower() == "default" || tenantName?.ToLower() == "clean cuts";
+
+            if (isDefaultTenant)
+            {
+                return BadRequest(new { message = "Password setup not allowed for default tenant" });
+            }
+
+            var admin = await _context.Admins
+                .FirstOrDefaultAsync(a => a.TenantId == tenantId && a.IsActive);
+
+            if (admin == null)
+            {
+                return NotFound("Admin account not found");
+            }
+
+            if (admin.HasCustomPassword)
+            {
+                return BadRequest(new { message = "Password has already been set. Use password recovery if needed." });
+            }
+
+            // Validate password
+            var validationResult = _passwordPolicyService.ValidatePassword(request.Password);
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(new { message = "Password validation failed", errors = validationResult.Errors });
+            }
+
+            // Set password
+            admin.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+            admin.HasCustomPassword = true;
+            admin.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Password set successfully" });
+        }
+
+        [HttpPost("recover-password")]
+        public async Task<ActionResult> RecoverPassword(PasswordRecoveryRequest request)
+        {
+            var tenantId = TenantHelper.GetCurrentTenantId(HttpContext);
+            var tenantName = TenantHelper.GetCurrentTenantName(HttpContext);
+            var isDefaultTenant = tenantName?.ToLower() == "default" || tenantName?.ToLower() == "clean cuts";
+
+            if (isDefaultTenant)
+            {
+                return BadRequest(new { message = "Password recovery not available for default tenant" });
+            }
+
+            var admin = await _context.Admins
+                .Include(a => a.Tenant)
+                .FirstOrDefaultAsync(a => a.TenantId == tenantId && a.IsActive && a.Email == request.Email);
+
+            if (admin == null)
+            {
+                // Don't reveal if email exists or not for security
+                return Ok(new { message = "If the email exists, a recovery link has been sent" });
+            }
+
+            // Generate JWT reset token with short expiration
+            var resetToken = GeneratePasswordResetJwtToken(admin, tenantId);
+
+            // Send email
+            var emailSent = await _emailService.SendPasswordRecoveryEmailAsync(
+                admin.Email!, 
+                tenantName ?? "Your Barber Shop", 
+                resetToken,
+                admin.Tenant?.Subdomain
+            );
+
+            // Always return success message for security (don't reveal if email was sent)
+            return Ok(new { message = "If the email exists, a recovery link has been sent" });
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<ActionResult> ResetPassword(ResetPasswordRequest request)
+        {
+            var tenantId = TenantHelper.GetCurrentTenantId(HttpContext);
+            var tenantName = TenantHelper.GetCurrentTenantName(HttpContext);
+            var isDefaultTenant = tenantName?.ToLower() == "default" || tenantName?.ToLower() == "clean cuts";
+
+            if (isDefaultTenant)
+            {
+                return BadRequest(new { message = "Password reset not available for default tenant" });
+            }
+
+            // Validate JWT token
+            var adminId = await ValidatePasswordResetTokenAsync(request.Token, tenantId);
+            if (adminId == null)
+            {
+                return BadRequest(new { message = "Invalid, expired, or already used reset token" });
+            }
+
+            // Get admin
+            var admin = await _context.Admins
+                .FirstOrDefaultAsync(a => a.Id == adminId && a.TenantId == tenantId && a.IsActive);
+
+            if (admin == null)
+            {
+                return BadRequest(new { message = "Invalid reset token" });
+            }
+
+            // Validate new password
+            var validationResult = _passwordPolicyService.ValidatePassword(request.NewPassword);
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(new { message = "Password validation failed", errors = validationResult.Errors });
+            }
+
+            // Update password
+            admin.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            admin.HasCustomPassword = true;
+            admin.UpdatedAt = DateTime.UtcNow;
+
+            // Save password changes to database
+            await _context.SaveChangesAsync();
+
+            // Mark token as used ONLY after successful password change
+            using (var sha256 = System.Security.Cryptography.SHA256.Create())
+            {
+                var tokenHash = Convert.ToBase64String(sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(request.Token)));
+                var usedToken = new UsedPasswordResetToken
+                {
+                    TokenHash = tokenHash,
+                    AdminId = adminId.Value,
+                    TenantId = tenantId,
+                    UsedAt = DateTime.UtcNow
+                };
+                _context.UsedPasswordResetTokens.Add(usedToken);
+                await _context.SaveChangesAsync();
+            }
+            return Ok(new { message = "Password reset successfully" });
+        }
+
+        private string GeneratePasswordResetJwtToken(Admin admin, int tenantId)
+        {
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? "your-secret-key-here"));
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, admin.Id.ToString()),
+                new Claim(ClaimTypes.Name, admin.Username),
+                new Claim("TenantId", tenantId.ToString()),
+                new Claim("TokenType", "PasswordReset"),
+                new Claim("Email", admin.Email ?? ""),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
+            };
+
+            var token = new JwtSecurityToken(
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddHours(1), // 1 hour expiration for password reset
+                signingCredentials: credentials
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        private async Task<int?> ValidatePasswordResetTokenAsync(string token, int tenantId)
+        {
+            try
+            {
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? "your-secret-key-here");
+
+                var validationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = _configuration["Jwt:Issuer"],
+                    ValidAudience = _configuration["Jwt:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ClockSkew = TimeSpan.Zero // No clock skew for password reset tokens
+                };
+
+                var principal = tokenHandler.ValidateToken(token, validationParameters, out SecurityToken validatedToken);
+                
+                // Check if this is a password reset token
+                var tokenType = principal.FindFirst("TokenType")?.Value;
+                if (tokenType != "PasswordReset")
+                {
+                    return null;
+                }
+
+                // Check tenant ID
+                var tokenTenantId = principal.FindFirst("TenantId")?.Value;
+                if (!int.TryParse(tokenTenantId, out var parsedTenantId) || parsedTenantId != tenantId)
+                {
+                    return null;
+                }
+
+                // Get admin ID
+                var adminIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!int.TryParse(adminIdClaim, out var adminId))
+                {
+                    return null;
+                }
+
+                // Check if this specific token has already been used
+                var usedTokens = await _context.UsedPasswordResetTokens
+                    .Where(t => t.AdminId == adminId && t.TenantId == tenantId)
+                    .ToListAsync();
+
+                foreach (var usedToken in usedTokens)
+                {
+                    // Use SHA256 hash for consistent token comparison
+                    using (var sha256 = System.Security.Cryptography.SHA256.Create())
+                    {
+                        var currentTokenHash = Convert.ToBase64String(sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(token)));
+                        if (currentTokenHash == usedToken.TokenHash)
+                        {
+                            return null; // This specific token already used
+                        }
+                    }
+                }
+
+                return adminId;
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }

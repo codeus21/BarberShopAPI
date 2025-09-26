@@ -46,5 +46,20 @@ namespace BarberShopAPI.Server.Helpers
         {
             return context.Items.ContainsKey("TenantId");
         }
+
+        /// <summary>
+        /// Extracts the current tenant name from the HTTP context.
+        /// </summary>
+        /// <param name="context">The HTTP context</param>
+        /// <returns>The tenant name if found, otherwise null</returns>
+        public static string? GetCurrentTenantName(HttpContext context)
+        {
+            if (!context.Items.ContainsKey("TenantName"))
+            {
+                return null;
+            }
+            
+            return (string)context.Items["TenantName"];
+        }
     }
 }

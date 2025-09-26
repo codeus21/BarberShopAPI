@@ -3,6 +3,7 @@ using System;
 using BarberShopAPI.Server.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BarberShopAPI.Server.Migrations
 {
     [DbContext(typeof(BarberShopContext))]
-    partial class BarberShopContextModelSnapshot : ModelSnapshot
+    [Migration("20250923135113_AddUsedPasswordResetTokens")]
+    partial class AddUsedPasswordResetTokens
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -81,7 +84,7 @@ namespace BarberShopAPI.Server.Migrations
                             HasCustomPassword = false,
                             IsActive = true,
                             Name = "Barber Admin",
-                            PasswordHash = "$2a$11$LR.1okQBjKbqbeam93arc.D7VdGRQtSkFx7dY7e/hdSyLfo6XV33C",
+                            PasswordHash = "$2a$11$benDf35qRWXNw0osak1bT.l0YJzO8HvMF97sPDan1awa2M6ZrhYx6",
                             TenantId = 1,
                             Username = "admin"
                         },
@@ -93,7 +96,7 @@ namespace BarberShopAPI.Server.Migrations
                             HasCustomPassword = false,
                             IsActive = true,
                             Name = "Elite Cuts Admin",
-                            PasswordHash = "$2a$11$NKgEWNv4d1ONeed8h0K.Z.VugW3MRAMXDrmDqpfUM1cGYq1dTTtp2",
+                            PasswordHash = "$2a$11$1f2fGZFonZYlqMVjU4JDaOwE5ieYIiUnrq.hU3LNlmMP9l4qOL2EG",
                             TenantId = 2,
                             Username = "admin"
                         });
@@ -249,7 +252,7 @@ namespace BarberShopAPI.Server.Migrations
                         {
                             Id = 1,
                             AdminEmail = "CleanCuts@thebarberbook.com",
-                            AdminPasswordHash = "$2a$11$tN/UFy.UbFBjjAMB1pvt3uCy1zx6lBXO./ramGkRzkGGYaPWrMntG",
+                            AdminPasswordHash = "$2a$11$lAJCNG2qgXjW11SmKtSczendtw7M/RcHTq8chwceU9.GNX00I6sTi",
                             BusinessAddress = "123 Main Street",
                             BusinessHours = "Mon-Fri: 9AM-6PM, Sat: 9AM-4PM, Sun: Closed",
                             BusinessPhone = "(123) 456-7890",
@@ -266,7 +269,7 @@ namespace BarberShopAPI.Server.Migrations
                         {
                             Id = 2,
                             AdminEmail = "amazedave15@gmail.com",
-                            AdminPasswordHash = "$2a$11$3CfYjpYX.z/wm.PSYrXSDuA5.0teJ/lLZ72jhV4J1MtiJlBYhbRDW",
+                            AdminPasswordHash = "$2a$11$EdP4jFzY7y39s8jwINve6OzW31gGSCSQw6PhQHB5qcmPLU4/SespS",
                             BusinessAddress = "456 Oak Street",
                             BusinessHours = "Mon-Fri: 9AM-7PM, Sat: 9AM-5PM, Sun: Closed",
                             BusinessPhone = "(555) 123-4567",
@@ -400,44 +403,6 @@ namespace BarberShopAPI.Server.Migrations
                         });
                 });
 
-            modelBuilder.Entity("BarberShopAPI.Server.Models.UsedPasswordResetToken", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AdminId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TenantId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("TokenHash")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<DateTime>("UsedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("NOW()");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AdminId");
-
-                    b.HasIndex("TenantId");
-
-                    b.HasIndex("TokenHash")
-                        .IsUnique();
-
-                    b.HasIndex("UsedAt");
-
-                    b.ToTable("used_password_reset_tokens", (string)null);
-                });
-
             modelBuilder.Entity("BarberShopAPI.Server.Models.Admin", b =>
                 {
                     b.HasOne("BarberShopAPI.Server.Models.BarberShop", "Tenant")
@@ -475,25 +440,6 @@ namespace BarberShopAPI.Server.Migrations
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Tenant");
-                });
-
-            modelBuilder.Entity("BarberShopAPI.Server.Models.UsedPasswordResetToken", b =>
-                {
-                    b.HasOne("BarberShopAPI.Server.Models.Admin", "Admin")
-                        .WithMany()
-                        .HasForeignKey("AdminId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("BarberShopAPI.Server.Models.BarberShop", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Admin");
 
                     b.Navigation("Tenant");
                 });

@@ -17,6 +17,7 @@ namespace BarberShopAPI.Server.Data
         public DbSet<Service> Services { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
         public DbSet<Admin> Admins { get; set; }
+        public DbSet<UsedPasswordResetToken> UsedPasswordResetTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -88,9 +89,11 @@ namespace BarberShopAPI.Server.Data
             modelBuilder.Entity<Admin>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.Username).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Username).IsRequired().HasMaxLength(100);
                 entity.Property(e => e.PasswordHash).IsRequired().HasMaxLength(255);
-                entity.Property(e => e.Email).HasMaxLength(100);
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Email).HasMaxLength(200);
+                entity.Property(e => e.HasCustomPassword).HasDefaultValue(false);
                 
                 // Tenant relationship
                 entity.HasOne(e => e.Tenant)
@@ -99,6 +102,31 @@ namespace BarberShopAPI.Server.Data
                       .OnDelete(DeleteBehavior.Cascade);
                 
                 entity.ToTable("admins");
+            });
+
+            // Configure UsedPasswordResetToken entity
+            modelBuilder.Entity<UsedPasswordResetToken>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.TokenHash).IsRequired().HasMaxLength(500);
+                entity.Property(e => e.UsedAt).HasDefaultValueSql("NOW()");
+                
+                // Relationships
+                entity.HasOne(e => e.Admin)
+                      .WithMany()
+                      .HasForeignKey(e => e.AdminId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                
+                entity.HasOne(e => e.Tenant)
+                      .WithMany()
+                      .HasForeignKey(e => e.TenantId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                
+                // Index for performance
+                entity.HasIndex(e => e.TokenHash).IsUnique();
+                entity.HasIndex(e => e.UsedAt);
+                
+                entity.ToTable("used_password_reset_tokens");
             });
 
             // Seed default tenant and data
@@ -128,7 +156,7 @@ namespace BarberShopAPI.Server.Data
                     Id = 2,
                     Name = "Elite Cuts",
                     Subdomain = "elite",
-                    AdminEmail = "admin@elitecuts.com",
+                    AdminEmail = "amazedave15@gmail.com",
                     AdminPasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
                     BusinessPhone = "(555) 123-4567",
                     BusinessAddress = "456 Oak Street",
@@ -234,6 +262,7 @@ namespace BarberShopAPI.Server.Data
                     Name = "Barber Admin",
                     Email = "admin@thebarberbook.com",
                     IsActive = true,
+                    HasCustomPassword = false, // Default tenant keeps simple credentials
                     CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                 },
                 new Admin
@@ -243,8 +272,9 @@ namespace BarberShopAPI.Server.Data
                     Username = "admin",
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
                     Name = "Elite Cuts Admin",
-                    Email = "admin@elitecuts.com",
+                    Email = "amazedave15@gmail.com",
                     IsActive = true,
+                    HasCustomPassword = false, // Will be set to true when they create custom password
                     CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                 }
             );

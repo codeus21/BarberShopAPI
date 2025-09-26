@@ -8,8 +8,8 @@ namespace BarberShopAPI.Server.Models
         public int Id { get; set; }
 
         [Required]
-        [StringLength(20)]
-        public string DayOfWeek { get; set; } = string.Empty; // Monday, Tuesday, etc.
+        [Column(TypeName = "date")]
+        public DateTime ScheduleDate { get; set; } // Specific date instead of day of week
 
         [Required]
         [Column(TypeName = "time")]
@@ -36,7 +36,7 @@ namespace BarberShopAPI.Server.Models
     public class CreateAvailabilityScheduleRequest
     {
         [Required]
-        public string DayOfWeek { get; set; } = string.Empty;
+        public DateTime ScheduleDate { get; set; } // Specific date
 
         [Required]
         public string StartTime { get; set; } = string.Empty; // Format: "HH:MM"
@@ -61,7 +61,7 @@ namespace BarberShopAPI.Server.Models
     public class AvailabilityScheduleResponse
     {
         public int Id { get; set; }
-        public string DayOfWeek { get; set; } = string.Empty;
+        public DateTime ScheduleDate { get; set; }
         public string StartTime { get; set; } = string.Empty;
         public string EndTime { get; set; } = string.Empty;
         public bool IsAvailable { get; set; }

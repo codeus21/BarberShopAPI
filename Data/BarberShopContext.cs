@@ -134,7 +134,7 @@ namespace BarberShopAPI.Server.Data
             modelBuilder.Entity<AvailabilitySchedule>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.DayOfWeek).IsRequired().HasMaxLength(20);
+                entity.Property(e => e.ScheduleDate).IsRequired();
                 entity.Property(e => e.IsAvailable).HasDefaultValue(true);
                 
                 // Tenant relationship
@@ -144,7 +144,7 @@ namespace BarberShopAPI.Server.Data
                       .OnDelete(DeleteBehavior.Cascade);
                 
                 // Index for performance
-                entity.HasIndex(e => new { e.TenantId, e.DayOfWeek });
+                entity.HasIndex(e => new { e.TenantId, e.ScheduleDate });
                 
                 entity.ToTable("availability_schedules");
             });

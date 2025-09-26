@@ -182,12 +182,12 @@ namespace BarberShopAPI.Server.Controllers
             
             var schedules = await _context.AvailabilitySchedules
                 .Where(a => a.TenantId == tenantId)
-                .OrderBy(a => a.DayOfWeek)
+                .OrderBy(a => a.ScheduleDate)
                 .ThenBy(a => a.StartTime)
                 .Select(a => new
                 {
                     a.Id,
-                    a.DayOfWeek,
+                    a.ScheduleDate,
                     StartTime = a.StartTime.ToString(@"hh\:mm"),
                     EndTime = a.EndTime.ToString(@"hh\:mm"),
                     a.IsAvailable,
@@ -199,60 +199,6 @@ namespace BarberShopAPI.Server.Controllers
             return Ok(schedules);
         }
 
-        // POST: api/Admin/availability/initialize-default
-        [HttpPost("availability/initialize-default")]
-        public async Task<ActionResult> InitializeDefaultAvailability()
-        {
-            var tenantId = TenantHelper.GetCurrentTenantId(HttpContext);
-            
-            try
-            {
-                var daysOfWeek = new[] { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
-                var defaultSchedules = new List<AvailabilitySchedule>();
-
-                foreach (var day in daysOfWeek)
-                {
-                    // Check if schedules already exist for this day
-                    var existingSchedules = await _context.AvailabilitySchedules
-                        .Where(a => a.TenantId == tenantId && a.DayOfWeek == day)
-                        .ToListAsync();
-                    
-                    if (existingSchedules.Any())
-                    {
-                        continue; // Skip if schedules already exist
-                    }
-
-                    // Create default schedule (9 AM to 6 PM for weekdays, 9 AM to 4 PM for weekends)
-                    var startTime = TimeSpan.FromHours(9);
-                    var endTime = (day == "Saturday" || day == "Sunday") ? TimeSpan.FromHours(16) : TimeSpan.FromHours(18);
-
-                    var schedule = new AvailabilitySchedule
-                    {
-                        TenantId = tenantId,
-                        DayOfWeek = day,
-                        StartTime = startTime,
-                        EndTime = endTime,
-                        IsAvailable = true,
-                        CreatedAt = DateTime.UtcNow
-                    };
-
-                    defaultSchedules.Add(schedule);
-                }
-
-                // Add all new schedules
-                if (defaultSchedules.Any())
-                {
-                    _context.AvailabilitySchedules.AddRange(defaultSchedules);
-                    await _context.SaveChangesAsync();
-                }
-
-                return Ok(new { message = $"Initialized default availability schedules for {defaultSchedules.Count} days." });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Error initializing default availability: " + ex.Message });
-            }
-        }
     }
 
 

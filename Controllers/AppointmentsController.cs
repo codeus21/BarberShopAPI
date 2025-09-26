@@ -103,9 +103,10 @@ namespace BarberShopAPI.Server.Controllers
             // Get available time slots from the availability schedule
             var availableTimeSlots = await _availabilityRepository.GetAvailableTimeSlotsAsync(date);
             
+            // If no availability schedule is set, return empty list (no times available)
             if (!availableTimeSlots.Any())
             {
-                return Ok(new List<string>()); // No availability set for this day
+                return Ok(new List<string>());
             }
 
             // Get appointments for the date
@@ -119,6 +120,20 @@ namespace BarberShopAPI.Server.Controllers
             var availableSlots = availableTimeSlots.Where(slot => !bookedSlots.Contains(slot)).ToList();
 
             return availableSlots;
+        }
+
+        // GET: api/Appointments/booked-slots/2024-01-15
+        [HttpGet("booked-slots/{date}")]
+        public async Task<ActionResult<IEnumerable<string>>> GetBookedSlots(DateTime date)
+        {
+            // Get appointments for the date
+            var appointments = await _appointmentRepository.GetAppointmentsByDateAsync(date);
+            var bookedSlots = appointments
+                .Where(a => a.Status != "Cancelled")
+                .Select(a => a.AppointmentTime.ToString(@"hh\:mm\:ss"))
+                .ToList();
+
+            return bookedSlots;
         }
     }
 }

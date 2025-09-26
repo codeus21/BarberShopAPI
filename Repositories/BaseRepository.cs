@@ -142,10 +142,10 @@ namespace BarberShopAPI.Server.Repositories
         public AvailabilityScheduleRepository(BarberShopContext context, IHttpContextAccessor httpContextAccessor) 
             : base(context, httpContextAccessor) { }
 
-        public async Task<List<AvailabilitySchedule>> GetByDayOfWeekAsync(string dayOfWeek)
+        public async Task<List<AvailabilitySchedule>> GetByDateAsync(DateTime date)
         {
             return await GetTenantQuery()
-                .Where(a => a.DayOfWeek == dayOfWeek && a.IsAvailable)
+                .Where(a => a.ScheduleDate.Date == date.Date && a.IsAvailable)
                 .OrderBy(a => a.StartTime)
                 .ToListAsync();
         }
@@ -153,22 +153,21 @@ namespace BarberShopAPI.Server.Repositories
         public async Task<List<AvailabilitySchedule>> GetAllSchedulesAsync()
         {
             return await GetTenantQuery()
-                .OrderBy(a => a.DayOfWeek)
+                .OrderBy(a => a.ScheduleDate)
                 .ThenBy(a => a.StartTime)
                 .ToListAsync();
         }
 
-        public async Task<AvailabilitySchedule?> GetByDayAndTimeAsync(string dayOfWeek, TimeSpan startTime)
+        public async Task<AvailabilitySchedule?> GetByDateAndTimeAsync(DateTime date, TimeSpan startTime)
         {
             return await GetTenantQuery()
-                .FirstOrDefaultAsync(a => a.DayOfWeek == dayOfWeek && a.StartTime == startTime);
+                .FirstOrDefaultAsync(a => a.ScheduleDate.Date == date.Date && a.StartTime == startTime);
         }
 
         public async Task<bool> IsTimeSlotAvailableAsync(DateTime date, TimeSpan time)
         {
-            var dayOfWeek = date.DayOfWeek.ToString();
             return await GetTenantQuery()
-                .AnyAsync(a => a.DayOfWeek == dayOfWeek && 
+                .AnyAsync(a => a.ScheduleDate.Date == date.Date && 
                               a.IsAvailable &&
                               time >= a.StartTime && 
                               time < a.EndTime);
@@ -176,9 +175,8 @@ namespace BarberShopAPI.Server.Repositories
 
         public async Task<List<string>> GetAvailableTimeSlotsAsync(DateTime date)
         {
-            var dayOfWeek = date.DayOfWeek.ToString();
             var schedules = await GetTenantQuery()
-                .Where(a => a.DayOfWeek == dayOfWeek && a.IsAvailable)
+                .Where(a => a.ScheduleDate.Date == date.Date && a.IsAvailable)
                 .OrderBy(a => a.StartTime)
                 .ToListAsync();
 

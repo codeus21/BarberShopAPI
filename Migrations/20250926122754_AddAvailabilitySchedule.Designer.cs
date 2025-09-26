@@ -3,6 +3,7 @@ using System;
 using BarberShopAPI.Server.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BarberShopAPI.Server.Migrations
 {
     [DbContext(typeof(BarberShopContext))]
-    partial class BarberShopContextModelSnapshot : ModelSnapshot
+    [Migration("20250926122754_AddAvailabilitySchedule")]
+    partial class AddAvailabilitySchedule
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -81,7 +84,7 @@ namespace BarberShopAPI.Server.Migrations
                             HasCustomPassword = false,
                             IsActive = true,
                             Name = "Barber Admin",
-                            PasswordHash = "$2a$11$JnEBBjeMIASlJfX8id.17eumTHuy/w5vnUcZ/plEM/tADV6OkwvD2",
+                            PasswordHash = "$2a$11$NXs.37jCIHp/18dL6XnCweRIAq/7tkXYUEsS75FEnsyWB7O4nbmJK",
                             TenantId = 1,
                             Username = "admin"
                         },
@@ -93,7 +96,7 @@ namespace BarberShopAPI.Server.Migrations
                             HasCustomPassword = false,
                             IsActive = true,
                             Name = "Elite Cuts Admin",
-                            PasswordHash = "$2a$11$pDgf/7EnaYktPgskNkP2FutVz1h8YkrFi/Vr7zYf/l5k6pI99Sx7a",
+                            PasswordHash = "$2a$11$TIsfeEvfwDJTet.R7GQ6keIwXbkKe7ymdoeEohCJNbcHdDmOZHT1S",
                             TenantId = 2,
                             Username = "admin"
                         });
@@ -171,6 +174,11 @@ namespace BarberShopAPI.Server.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("DayOfWeek")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<TimeSpan>("EndTime")
                         .HasColumnType("time");
 
@@ -178,9 +186,6 @@ namespace BarberShopAPI.Server.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(true);
-
-                    b.Property<DateTime>("ScheduleDate")
-                        .HasColumnType("date");
 
                     b.Property<TimeSpan>("StartTime")
                         .HasColumnType("time");
@@ -193,7 +198,7 @@ namespace BarberShopAPI.Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TenantId", "ScheduleDate");
+                    b.HasIndex("TenantId", "DayOfWeek");
 
                     b.ToTable("availability_schedules", (string)null);
                 });
@@ -287,7 +292,7 @@ namespace BarberShopAPI.Server.Migrations
                         {
                             Id = 1,
                             AdminEmail = "CleanCuts@thebarberbook.com",
-                            AdminPasswordHash = "$2a$11$Xn3tKU9Idk/6W2t7R848wu.gVze8YbY.uBIlxe3v9P1mRqRLf.nga",
+                            AdminPasswordHash = "$2a$11$DWllcN0gtMYaYM1Ap5Y2WegoKonEQZ0yKIa.P4eXTZfCzaorBkOAe",
                             BusinessAddress = "123 Main Street",
                             BusinessHours = "Mon-Fri: 9AM-6PM, Sat: 9AM-4PM, Sun: Closed",
                             BusinessPhone = "(123) 456-7890",
@@ -304,7 +309,7 @@ namespace BarberShopAPI.Server.Migrations
                         {
                             Id = 2,
                             AdminEmail = "amazedave15@gmail.com",
-                            AdminPasswordHash = "$2a$11$Lb4x4xMIJVRdW8GN2JOzmeX0x36m/lmznRCxRy/Od.SZ5UeKBeEXa",
+                            AdminPasswordHash = "$2a$11$IFI96Gs4/0tF9kmPGQgOAuhcQRAHWkPNxGsJUuEzMPM.p1ZZpEqFG",
                             BusinessAddress = "456 Oak Street",
                             BusinessHours = "Mon-Fri: 9AM-7PM, Sat: 9AM-5PM, Sun: Closed",
                             BusinessPhone = "(555) 123-4567",

@@ -25,7 +25,7 @@ namespace BarberShopAPI.Server.Controllers
             var response = schedules.Select(s => new AvailabilityScheduleResponse
             {
                 Id = s.Id,
-                DayOfWeek = s.DayOfWeek,
+                ScheduleDate = s.ScheduleDate,
                 StartTime = s.StartTime.ToString(@"hh\:mm"),
                 EndTime = s.EndTime.ToString(@"hh\:mm"),
                 IsAvailable = s.IsAvailable,
@@ -36,15 +36,15 @@ namespace BarberShopAPI.Server.Controllers
             return Ok(response);
         }
 
-        // GET: api/Availability/day/Monday
-        [HttpGet("day/{dayOfWeek}")]
-        public async Task<ActionResult<IEnumerable<AvailabilityScheduleResponse>>> GetAvailabilityByDay(string dayOfWeek)
+        // GET: api/Availability/date/2024-01-15
+        [HttpGet("date/{date}")]
+        public async Task<ActionResult<IEnumerable<AvailabilityScheduleResponse>>> GetAvailabilityByDate(DateTime date)
         {
-            var schedules = await _availabilityRepository.GetByDayOfWeekAsync(dayOfWeek);
+            var schedules = await _availabilityRepository.GetByDateAsync(date);
             var response = schedules.Select(s => new AvailabilityScheduleResponse
             {
                 Id = s.Id,
-                DayOfWeek = s.DayOfWeek,
+                ScheduleDate = s.ScheduleDate,
                 StartTime = s.StartTime.ToString(@"hh\:mm"),
                 EndTime = s.EndTime.ToString(@"hh\:mm"),
                 IsAvailable = s.IsAvailable,
@@ -67,13 +67,6 @@ namespace BarberShopAPI.Server.Controllers
         [HttpPost]
         public async Task<ActionResult<AvailabilityScheduleResponse>> CreateAvailabilitySchedule(CreateAvailabilityScheduleRequest request)
         {
-            // Validate day of week
-            var validDays = new[] { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
-            if (!validDays.Contains(request.DayOfWeek))
-            {
-                return BadRequest("Invalid day of week. Must be one of: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday");
-            }
-
             // Parse times
             if (!TimeSpan.TryParse(request.StartTime, out var startTime))
             {
@@ -90,8 +83,8 @@ namespace BarberShopAPI.Server.Controllers
                 return BadRequest("Start time must be before end time.");
             }
 
-            // Check if there's already a schedule for this day and time
-            var existingSchedule = await _availabilityRepository.GetByDayAndTimeAsync(request.DayOfWeek, startTime);
+            // Check if there's already a schedule for this date and time
+            var existingSchedule = await _availabilityRepository.GetByDateAndTimeAsync(request.ScheduleDate, startTime);
             if (existingSchedule != null)
             {
                 return BadRequest("A schedule already exists for this day and start time.");
@@ -99,7 +92,7 @@ namespace BarberShopAPI.Server.Controllers
 
             var schedule = new AvailabilitySchedule
             {
-                DayOfWeek = request.DayOfWeek,
+                ScheduleDate = request.ScheduleDate.Date,
                 StartTime = startTime,
                 EndTime = endTime,
                 IsAvailable = request.IsAvailable,
@@ -111,7 +104,7 @@ namespace BarberShopAPI.Server.Controllers
             var response = new AvailabilityScheduleResponse
             {
                 Id = createdSchedule.Id,
-                DayOfWeek = createdSchedule.DayOfWeek,
+                ScheduleDate = createdSchedule.ScheduleDate,
                 StartTime = createdSchedule.StartTime.ToString(@"hh\:mm"),
                 EndTime = createdSchedule.EndTime.ToString(@"hh\:mm"),
                 IsAvailable = createdSchedule.IsAvailable,
@@ -158,7 +151,7 @@ namespace BarberShopAPI.Server.Controllers
             var response = new AvailabilityScheduleResponse
             {
                 Id = updatedSchedule.Id,
-                DayOfWeek = updatedSchedule.DayOfWeek,
+                ScheduleDate = updatedSchedule.ScheduleDate,
                 StartTime = updatedSchedule.StartTime.ToString(@"hh\:mm"),
                 EndTime = updatedSchedule.EndTime.ToString(@"hh\:mm"),
                 IsAvailable = updatedSchedule.IsAvailable,
@@ -182,45 +175,5 @@ namespace BarberShopAPI.Server.Controllers
             return NoContent();
         }
 
-        // POST: api/Availability/initialize-default
-        [HttpPost("initialize-default")]
-        public async Task<ActionResult> InitializeDefaultSchedule()
-        {
-            var daysOfWeek = new[] { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
-            var defaultSchedules = new List<AvailabilitySchedule>();
-
-            foreach (var day in daysOfWeek)
-            {
-                // Check if schedules already exist for this day
-                var existingSchedules = await _availabilityRepository.GetByDayOfWeekAsync(day);
-                if (existingSchedules.Any())
-                {
-                    continue; // Skip if schedules already exist
-                }
-
-                // Create default schedule (9 AM to 6 PM for weekdays, 9 AM to 4 PM for weekends)
-                var startTime = TimeSpan.FromHours(9);
-                var endTime = (day == "Saturday" || day == "Sunday") ? TimeSpan.FromHours(16) : TimeSpan.FromHours(18);
-
-                var schedule = new AvailabilitySchedule
-                {
-                    DayOfWeek = day,
-                    StartTime = startTime,
-                    EndTime = endTime,
-                    IsAvailable = true,
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                defaultSchedules.Add(schedule);
-            }
-
-            // Add all new schedules
-            foreach (var schedule in defaultSchedules)
-            {
-                await _availabilityRepository.AddAsync(schedule);
-            }
-
-            return Ok(new { message = $"Initialized default schedules for {defaultSchedules.Count} days." });
-        }
     }
 }

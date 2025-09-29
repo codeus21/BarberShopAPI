@@ -134,12 +134,13 @@ namespace BarberShopAPI.Server.Data
             modelBuilder.Entity<AvailabilitySchedule>(entity =>
             {
                 entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).ValueGeneratedOnAdd(); // Ensure ID is auto-generated
                 entity.Property(e => e.ScheduleDate).IsRequired();
                 entity.Property(e => e.IsAvailable).HasDefaultValue(true);
                 
-                // Tenant relationship
-                entity.HasOne(e => e.Tenant)
-                      .WithMany(t => t.AvailabilitySchedules)
+                // Tenant relationship (foreign key only, no navigation property)
+                entity.HasOne<BarberShop>()
+                      .WithMany() // No navigation property to prevent circular reference
                       .HasForeignKey(e => e.TenantId)
                       .OnDelete(DeleteBehavior.Cascade);
                 

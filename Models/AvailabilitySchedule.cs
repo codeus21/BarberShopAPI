@@ -28,9 +28,6 @@ namespace BarberShopAPI.Server.Models
 
         // Multi-tenant support
         public int TenantId { get; set; }
-
-        // Navigation properties
-        public virtual BarberShop Tenant { get; set; } = null!;
     }
 
     public class CreateAvailabilityScheduleRequest

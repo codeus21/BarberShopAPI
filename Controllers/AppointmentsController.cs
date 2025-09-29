@@ -126,14 +126,40 @@ namespace BarberShopAPI.Server.Controllers
         [HttpGet("booked-slots/{date}")]
         public async Task<ActionResult<IEnumerable<string>>> GetBookedSlots(DateTime date)
         {
-            // Get appointments for the date
-            var appointments = await _appointmentRepository.GetAppointmentsByDateAsync(date);
-            var bookedSlots = appointments
-                .Where(a => a.Status != "Cancelled")
-                .Select(a => a.AppointmentTime.ToString(@"hh\:mm\:ss"))
-                .ToList();
+            try
+            {
+                Console.WriteLine($"GetBookedSlots called for date: {date}");
+                
+                // Get appointments for the date
+                var appointments = await _appointmentRepository.GetAppointmentsByDateAsync(date);
+                Console.WriteLine($"Found {appointments.Count()} appointments for {date}");
+                
+                var bookedSlots = new List<string>();
+                foreach (var appointment in appointments.Where(a => a.Status != "Cancelled"))
+                {
+                    try
+                    {
+                        var timeString = $"{appointment.AppointmentTime.Hours:D2}:{appointment.AppointmentTime.Minutes:D2}";
+                        bookedSlots.Add(timeString);
+                        Console.WriteLine($"Added booked slot: {timeString} for appointment ID: {appointment.Id}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error formatting appointment time for ID {appointment.Id}: {ex.Message}");
+                        Console.WriteLine($"AppointmentTime value: {appointment.AppointmentTime}");
+                        Console.WriteLine($"AppointmentTime type: {appointment.AppointmentTime.GetType()}");
+                    }
+                }
 
-            return bookedSlots;
+                Console.WriteLine($"Returning booked slots: {string.Join(", ", bookedSlots)}");
+                return bookedSlots;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetBookedSlots: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                return StatusCode(500, "Internal server error");
+            }
         }
     }
 }

@@ -39,7 +39,7 @@ namespace BarberShopAPI.Server.Controllers
 
                 return Ok(response);
             }
-            catch (FormatException ex)
+            catch (FormatException)
             {
                 // If there's invalid TimeSpan data, return empty list
                 return Ok(new List<AvailabilityScheduleResponse>());
@@ -66,7 +66,7 @@ namespace BarberShopAPI.Server.Controllers
 
                 return Ok(response);
             }
-            catch (FormatException ex)
+            catch (FormatException)
             {
                 // If there's invalid TimeSpan data, return empty list
                 return Ok(new List<AvailabilityScheduleResponse>());
@@ -88,17 +88,22 @@ namespace BarberShopAPI.Server.Controllers
             Console.WriteLine($"CreateAvailabilitySchedule called with: ScheduleDate={request.ScheduleDate}, StartTime={request.StartTime}, EndTime={request.EndTime}, IsAvailable={request.IsAvailable}");
             
             // Parse times
+            Console.WriteLine($"Attempting to parse StartTime: '{request.StartTime}'");
+            Console.WriteLine($"Attempting to parse EndTime: '{request.EndTime}'");
+            
             if (!TimeSpan.TryParse(request.StartTime, out var startTime))
             {
-                Console.WriteLine($"Invalid start time format: {request.StartTime}");
+                Console.WriteLine($"Invalid start time format: '{request.StartTime}'");
                 return BadRequest("Invalid start time format. Please use HH:MM format.");
             }
 
             if (!TimeSpan.TryParse(request.EndTime, out var endTime))
             {
-                Console.WriteLine($"Invalid end time format: {request.EndTime}");
+                Console.WriteLine($"Invalid end time format: '{request.EndTime}'");
                 return BadRequest("Invalid end time format. Please use HH:MM format.");
             }
+            
+            Console.WriteLine($"Successfully parsed StartTime: {startTime}, EndTime: {endTime}");
 
             if (startTime >= endTime)
             {
@@ -140,12 +145,12 @@ namespace BarberShopAPI.Server.Controllers
                     UpdatedAt = createdSchedule.UpdatedAt
                 };
 
-                Console.WriteLine($"Returning response with ID: {response.Id}");
+                Console.WriteLine($"Returning response with ID: d{response.Id}");
                 return Ok(response);
             }
-            catch (FormatException ex)
+            catch (FormatException)
             {
-                Console.WriteLine($"FormatException caught: {ex.Message}");
+                Console.WriteLine("FormatException caught during TimeSpan formatting");
                 Console.WriteLine($"StartTime: {createdSchedule?.StartTime}, EndTime: {createdSchedule?.EndTime}");
                 // If there's a TimeSpan formatting issue, return a simple response
                 return Ok(new AvailabilityScheduleResponse

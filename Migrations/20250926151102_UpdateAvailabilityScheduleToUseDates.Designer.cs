@@ -3,6 +3,7 @@ using System;
 using BarberShopAPI.Server.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BarberShopAPI.Server.Migrations
 {
     [DbContext(typeof(BarberShopContext))]
-    partial class BarberShopContextModelSnapshot : ModelSnapshot
+    [Migration("20250926151102_UpdateAvailabilityScheduleToUseDates")]
+    partial class UpdateAvailabilityScheduleToUseDates
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -81,7 +84,7 @@ namespace BarberShopAPI.Server.Migrations
                             HasCustomPassword = false,
                             IsActive = true,
                             Name = "Barber Admin",
-                            PasswordHash = "$2a$11$fFFx6UFMRyU0iqg6owc.6efM5PtMaq58eI8RwkmyTPX8jjhi6tw8e",
+                            PasswordHash = "$2a$11$JnEBBjeMIASlJfX8id.17eumTHuy/w5vnUcZ/plEM/tADV6OkwvD2",
                             TenantId = 1,
                             Username = "admin"
                         },
@@ -93,7 +96,7 @@ namespace BarberShopAPI.Server.Migrations
                             HasCustomPassword = false,
                             IsActive = true,
                             Name = "Elite Cuts Admin",
-                            PasswordHash = "$2a$11$WU1wdECFAu7Xt7KpA4pX8eVhHzgHWwMQgtFL8fagLoaqJQuG9vnPq",
+                            PasswordHash = "$2a$11$pDgf/7EnaYktPgskNkP2FutVz1h8YkrFi/Vr7zYf/l5k6pI99Sx7a",
                             TenantId = 2,
                             Username = "admin"
                         });
@@ -287,7 +290,7 @@ namespace BarberShopAPI.Server.Migrations
                         {
                             Id = 1,
                             AdminEmail = "CleanCuts@thebarberbook.com",
-                            AdminPasswordHash = "$2a$11$/xxN2gTOAkBlo9imUycLOeeNsdMm6QG.A1zw9DGoMsOKcEnStShfW",
+                            AdminPasswordHash = "$2a$11$Xn3tKU9Idk/6W2t7R848wu.gVze8YbY.uBIlxe3v9P1mRqRLf.nga",
                             BusinessAddress = "123 Main Street",
                             BusinessHours = "Mon-Fri: 9AM-6PM, Sat: 9AM-4PM, Sun: Closed",
                             BusinessPhone = "(123) 456-7890",
@@ -304,7 +307,7 @@ namespace BarberShopAPI.Server.Migrations
                         {
                             Id = 2,
                             AdminEmail = "amazedave15@gmail.com",
-                            AdminPasswordHash = "$2a$11$pv6Vd6VVgq0iK1DJ.ACZE.1xgr316jz0JvfX8QHUbHQxy.J7McylK",
+                            AdminPasswordHash = "$2a$11$Lb4x4xMIJVRdW8GN2JOzmeX0x36m/lmznRCxRy/Od.SZ5UeKBeEXa",
                             BusinessAddress = "456 Oak Street",
                             BusinessHours = "Mon-Fri: 9AM-7PM, Sat: 9AM-5PM, Sun: Closed",
                             BusinessPhone = "(555) 123-4567",
@@ -508,11 +511,13 @@ namespace BarberShopAPI.Server.Migrations
 
             modelBuilder.Entity("BarberShopAPI.Server.Models.AvailabilitySchedule", b =>
                 {
-                    b.HasOne("BarberShopAPI.Server.Models.BarberShop", null)
-                        .WithMany()
+                    b.HasOne("BarberShopAPI.Server.Models.BarberShop", "Tenant")
+                        .WithMany("AvailabilitySchedules")
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("BarberShopAPI.Server.Models.Service", b =>
@@ -550,6 +555,8 @@ namespace BarberShopAPI.Server.Migrations
                     b.Navigation("Admins");
 
                     b.Navigation("Appointments");
+
+                    b.Navigation("AvailabilitySchedules");
 
                     b.Navigation("Services");
                 });

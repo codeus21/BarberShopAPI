@@ -173,6 +173,60 @@ namespace BarberShopAPI.Server.Controllers
                 return StatusCode(500, new { message = "Error clearing past appointments: " + ex.Message });
             }
         }
+
+        // GET: api/Admin/availability
+        [HttpGet("availability")]
+        public async Task<ActionResult<IEnumerable<object>>> GetAvailabilitySchedules()
+        {
+            var tenantId = TenantHelper.GetCurrentTenantId(HttpContext);
+            
+            try
+            {
+                var schedules = await _context.AvailabilitySchedules
+                    .Where(a => a.TenantId == tenantId)
+                    .OrderBy(a => a.ScheduleDate)
+                    .ThenBy(a => a.StartTime)
+                    .ToListAsync();
+
+                Console.WriteLine($"Found {schedules.Count} schedules for tenant {tenantId}");
+                foreach (var schedule in schedules)
+                {
+                    Console.WriteLine($"Schedule ID: {schedule.Id}, StartTime: {schedule.StartTime} (type: {schedule.StartTime.GetType()}), EndTime: {schedule.EndTime} (type: {schedule.EndTime.GetType()})");
+                }
+
+                var response = schedules.Select(a => new
+                {
+                    Id = a.Id,
+                    ScheduleDate = a.ScheduleDate,
+                    StartTime = $"{a.StartTime.Hours:D2}:{a.StartTime.Minutes:D2}",
+                    EndTime = $"{a.EndTime.Hours:D2}:{a.EndTime.Minutes:D2}",
+                    IsAvailable = a.IsAvailable,
+                    CreatedAt = a.CreatedAt,
+                    UpdatedAt = a.UpdatedAt
+                }).ToList();
+
+                return Ok(response);
+            }
+            catch (FormatException ex)
+            {
+                Console.WriteLine($"FormatException in GetAvailabilitySchedules: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                
+                // If there's invalid TimeSpan data, clear all availability schedules for this tenant
+                var invalidSchedules = await _context.AvailabilitySchedules
+                    .Where(a => a.TenantId == tenantId)
+                    .ToListAsync();
+                
+                Console.WriteLine($"Found {invalidSchedules.Count} invalid schedules to clear for tenant {tenantId}");
+                
+                _context.AvailabilitySchedules.RemoveRange(invalidSchedules);
+                await _context.SaveChangesAsync();
+                
+                Console.WriteLine("Cleared all invalid schedules");
+                return Ok(new List<object>()); // Return empty list
+            }
+        }
+
     }
 
 

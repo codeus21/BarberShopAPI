@@ -3,6 +3,7 @@ using System;
 using BarberShopAPI.Server.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BarberShopAPI.Server.Migrations
 {
     [DbContext(typeof(BarberShopContext))]
-    partial class BarberShopContextModelSnapshot : ModelSnapshot
+    [Migration("20250926214029_RemoveAvailabilityScheduleNavigationProperty")]
+    partial class RemoveAvailabilityScheduleNavigationProperty
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -81,7 +84,7 @@ namespace BarberShopAPI.Server.Migrations
                             HasCustomPassword = false,
                             IsActive = true,
                             Name = "Barber Admin",
-                            PasswordHash = "$2a$11$fFFx6UFMRyU0iqg6owc.6efM5PtMaq58eI8RwkmyTPX8jjhi6tw8e",
+                            PasswordHash = "$2a$11$/d2biCu8p8biI/h8E4YGTOZhxBVioIIrsRU3aGWtNzVgX2PutFNUC",
                             TenantId = 1,
                             Username = "admin"
                         },
@@ -93,7 +96,7 @@ namespace BarberShopAPI.Server.Migrations
                             HasCustomPassword = false,
                             IsActive = true,
                             Name = "Elite Cuts Admin",
-                            PasswordHash = "$2a$11$WU1wdECFAu7Xt7KpA4pX8eVhHzgHWwMQgtFL8fagLoaqJQuG9vnPq",
+                            PasswordHash = "$2a$11$TW4gGkvLqox3IO5cNAMf8Oi8S8dwIbJ6MgqQnOiXnUWzp/wmbRoeu",
                             TenantId = 2,
                             Username = "admin"
                         });
@@ -287,7 +290,7 @@ namespace BarberShopAPI.Server.Migrations
                         {
                             Id = 1,
                             AdminEmail = "CleanCuts@thebarberbook.com",
-                            AdminPasswordHash = "$2a$11$/xxN2gTOAkBlo9imUycLOeeNsdMm6QG.A1zw9DGoMsOKcEnStShfW",
+                            AdminPasswordHash = "$2a$11$/U3VnKj6YJc4GTEdIH0KNeO6rIQzHetBovYOQ45r9iqG.B/h3TxGW",
                             BusinessAddress = "123 Main Street",
                             BusinessHours = "Mon-Fri: 9AM-6PM, Sat: 9AM-4PM, Sun: Closed",
                             BusinessPhone = "(123) 456-7890",
@@ -304,7 +307,7 @@ namespace BarberShopAPI.Server.Migrations
                         {
                             Id = 2,
                             AdminEmail = "amazedave15@gmail.com",
-                            AdminPasswordHash = "$2a$11$pv6Vd6VVgq0iK1DJ.ACZE.1xgr316jz0JvfX8QHUbHQxy.J7McylK",
+                            AdminPasswordHash = "$2a$11$im04PtU2Wa47Hb2yHGQn7OKW4cjTBOEpfjpyqw7byNQOkamFl77Cu",
                             BusinessAddress = "456 Oak Street",
                             BusinessHours = "Mon-Fri: 9AM-7PM, Sat: 9AM-5PM, Sun: Closed",
                             BusinessPhone = "(555) 123-4567",
@@ -509,7 +512,7 @@ namespace BarberShopAPI.Server.Migrations
             modelBuilder.Entity("BarberShopAPI.Server.Models.AvailabilitySchedule", b =>
                 {
                     b.HasOne("BarberShopAPI.Server.Models.BarberShop", null)
-                        .WithMany()
+                        .WithMany("AvailabilitySchedules")
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -550,6 +553,8 @@ namespace BarberShopAPI.Server.Migrations
                     b.Navigation("Admins");
 
                     b.Navigation("Appointments");
+
+                    b.Navigation("AvailabilitySchedules");
 
                     b.Navigation("Services");
                 });

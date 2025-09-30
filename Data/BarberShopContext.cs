@@ -18,6 +18,7 @@ namespace BarberShopAPI.Server.Data
         public DbSet<Appointment> Appointments { get; set; }
         public DbSet<Admin> Admins { get; set; }
         public DbSet<UsedPasswordResetToken> UsedPasswordResetTokens { get; set; }
+        public DbSet<AvailabilitySchedule> AvailabilitySchedules { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -127,6 +128,26 @@ namespace BarberShopAPI.Server.Data
                 entity.HasIndex(e => e.UsedAt);
                 
                 entity.ToTable("used_password_reset_tokens");
+            });
+
+            // Configure AvailabilitySchedule entity with tenant relationship
+            modelBuilder.Entity<AvailabilitySchedule>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).ValueGeneratedOnAdd(); // Ensure ID is auto-generated
+                entity.Property(e => e.ScheduleDate).IsRequired();
+                entity.Property(e => e.IsAvailable).HasDefaultValue(true);
+                
+                // Tenant relationship (foreign key only, no navigation property)
+                entity.HasOne<BarberShop>()
+                      .WithMany() // No navigation property to prevent circular reference
+                      .HasForeignKey(e => e.TenantId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                
+                // Index for performance
+                entity.HasIndex(e => new { e.TenantId, e.ScheduleDate });
+                
+                entity.ToTable("availability_schedules");
             });
 
             // Seed default tenant and data
